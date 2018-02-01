@@ -1,0 +1,46 @@
+DROP DATABASE IF EXISTS student_assesment;
+
+CREATE DATABASE student_assesment;
+
+\c student_assesment
+
+CREATE TABLE class (
+    cid char(10) primary key,
+    name text
+);
+
+CREATE TABLE question (
+    qid char(10) primary key,
+    title text,
+    public boolean,
+    cid char(10) references class(cid)
+);
+
+CREATE TABLE answer (
+    aid char(10) primary key,
+    answer text,
+    qid char(10) references question(qid)
+);
+
+CREATE TABLE person (
+    pid char(10) primary key,
+    Name text
+);
+
+CREATE TABLE taking (
+    pid char(10) references person(pid),
+    cid char(10) references class(cid),
+    primary key(pid, cid)
+);
+
+CREATE TABLE teaches (
+    pid char(10) references person(pid),
+    cid char(10) references class(cid),
+    primary key(pid, cid)
+);
+
+CREATE TABLE answered (
+    pid char(10) references person(pid),
+    aid char(10) references answer(aid),
+    primary key(pid, aid)
+);
