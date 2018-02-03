@@ -21,8 +21,20 @@ type class struct {
 }
 
 func validClassReq(request classReq) bool {
-	//if no cookie bad request
 	return strings.Compare(request.Class.ClassName, "") != 0
+}
+
+func validCookie(cookie *http.Cookie) bool {
+	q := `Select * from person where pid = $1`
+	res, err := db.Exec(q, cookie.Value)
+	if err != nil {
+		return false
+	}
+	count, err := res.RowsAffected()
+	if err != nil {
+		return false
+	}
+	return count != 0
 }
 
 func createNewClass(w http.ResponseWriter, r *http.Request) (classReq, error) {
@@ -45,7 +57,6 @@ func createNewClass(w http.ResponseWriter, r *http.Request) (classReq, error) {
 		if err != http.ErrNoCookie {
 			return requestClass, err
 		}
-		fmt.Println("somewhat ok... :'(")
 		// create new person
 		err = createNewPerson(&requestClass.Person)
 		if err != nil {
@@ -54,10 +65,12 @@ func createNewClass(w http.ResponseWriter, r *http.Request) (classReq, error) {
 		//create cookie
 		cookie := &http.Cookie{Name: "UAT", Value: requestClass.Person.Pid, Expires: time.Now().AddDate(0, 0, 1)}
 		http.SetCookie(w, cookie)
-		fmt.Printf("cookie %s\n", cookie)
-		fmt.Printf("request Class: %v\n", requestClass)
+	} else {
+		// validate cookie
+		if !validCookie(cookies) {
+			return requestClass, fmt.Errorf("class: invalid cookie")
+		}
 	}
-	fmt.Printf("read:%#v\n", cookies)
 
 	// add class to db
 	err = insertClassDB(&requestClass.Class)
