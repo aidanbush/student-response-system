@@ -33,7 +33,21 @@ func handleJoinClass(w http.ResponseWriter, r *http.Request) {
 /* Instructor class management */
 
 func handleCreateQuesion(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	fmt.Println("handle create question")
+
+	question, err := createNewQuestion(w, r)
+	if err != nil {
+		return
+	}
+
+	jsonOut, err := json.Marshal(question)
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	//http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	fmt.Fprintf(w, "%s\n", string(jsonOut))
 	return
 }
 
