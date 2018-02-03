@@ -18,12 +18,13 @@ func createNewPerson(person *person) error {
 
 	// if err try again
 	for err != nil {
-		fmt.Println("retry: ", hash, " already exists")
+		fmt.Println("pid hash retry: ", hash, " already exists")
 		//if not duplicate error
 		if !pqslUniqueErr(err) {
 			fmt.Println("db", err)
 			return err
 		}
+		fmt.Println("pid hash retry: ", hash, " already exists")
 		// generate new random md5 hash
 		hash = genMD5(personUATLen)
 		_, err = db.Exec(q, hash, person.Name)

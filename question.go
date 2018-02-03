@@ -88,12 +88,12 @@ func insertQuestionDB(question *question, class string) error {
 
 	// if err try again
 	for err != nil {
-		fmt.Println("retry: ", hash, " already exists")
-		//if not duplicate error
+		// if not duplicate error
 		if !pqslUniqueErr(err) {
 			fmt.Println("db", err)
 			return err
 		}
+		fmt.Println("qid hash retry: ", hash, " already exists")
 		// generate new random md5 hash
 		hash = genMD5(questionUIDLen)
 		_, err = db.Exec(q, hash, question.QuestionTitle, false, class)

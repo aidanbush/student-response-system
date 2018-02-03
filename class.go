@@ -105,12 +105,12 @@ func insertClassDB(class *class) error {
 
 	// if err try again
 	for err != nil {
-		fmt.Println("retry: ", hash, " already exists")
 		//if not duplicate error
 		if !pqslUniqueErr(err) {
 			fmt.Println("db", err)
 			return err
 		}
+		fmt.Println("cid hash retry: ", hash, " already exists")
 		// generate new random md5 hash
 		hash = genMD5(classUIDLen)
 		_, err = db.Exec(q, hash, class.ClassName)
