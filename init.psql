@@ -41,6 +41,7 @@ CREATE TABLE teaches (
 
 CREATE TABLE answered (
     pid text references person(pid),
+    qid text references question(qid),
     aid text references answer(aid),
     primary key(pid, aid)
 );
