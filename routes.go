@@ -33,8 +33,6 @@ func handleJoinClass(w http.ResponseWriter, r *http.Request) {
 /* Instructor class management */
 
 func handleCreateQuesion(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("handle create question")
-
 	question, err := createNewQuestion(w, r)
 	if err != nil {
 		return
@@ -46,7 +44,6 @@ func handleCreateQuesion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	fmt.Fprintf(w, "%s\n", string(jsonOut))
 	return
 }
@@ -57,7 +54,18 @@ func handleDeleteQuesion(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleAddAnswer(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	answer, err := createNewAnswer(w, r)
+	if err != nil {
+		return
+	}
+
+	jsonOut, err := json.Marshal(answer)
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "%s\n", string(jsonOut))
 	return
 }
 

@@ -40,7 +40,6 @@ func createNewQuestion(w http.ResponseWriter, r *http.Request) (question, error)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return question, err
 	}
-	fmt.Printf("cookie: %s, class_id: %s\n", cookie.Value, classID)
 
 	if valid, err := validTeachClass(classID, cookie.Value); err != nil {
 		fmt.Println("error in validating class")
@@ -101,4 +100,29 @@ func insertQuestionDB(question *question, class string) error {
 	question.QuestionID = hash
 
 	return nil
+}
+
+func validOwnQuestion(questionID, UAT string) (bool, error) {
+	q := `select Q.qid from person as P, teaches as T, question as Q
+		where P.pid = $1 and P.pid = T.pid and Q.cid = T.cid and Q.qid = $2`
+
+	res, err := db.Exec(q, UAT, questionID)
+	if err != nil {
+		return false, err
+	}
+
+	//parse json
+	dataDec := json.NewDecoder(r.Body)
+
+	err = dataDec.Decode(&question)
+	if err != nil {
+		fmt.Println("decode: ", err)
+		return question, err
+	}
+	//count number of responses
+	count, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return count != 0, nil
 }
