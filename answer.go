@@ -25,12 +25,6 @@ func createNewAnswer(w http.ResponseWriter, r *http.Request) (answer, error) {
 	answer := answer{}
 	vars := mux.Vars(r)
 
-	/*classID, ok := vars["classID"]
-	if !ok {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return answer, fmt.Errorf("createNewAnswer: unable to grab classID")
-	}*/
-
 	questionID, ok := vars["questionID"]
 	if !ok {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -106,6 +100,27 @@ func insertAnswerDB(answer *answer) error {
 		_, err = db.Exec(q, hash, answer.AnswerText, answer.QuestionID)
 	}
 	answer.AnswerID = hash
+
+	return nil
+}
+
+func fillAnswers(question question) error {
+	q := `select * from answers where qid = $1`
+
+	rows, err := db.Queryx(q, question.QuestionID)
+	if err != nil {
+		return err
+	}
+
+	answer := answer{}
+
+	for rows.Next() {
+		err = rows.StructScan(&answer)
+		if err != nil {
+			return err
+		}
+		question.Answers = append(question.Answers, answer)
+	}
 
 	return nil
 }

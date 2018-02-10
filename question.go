@@ -15,8 +15,8 @@ type question struct {
 	QuestionTitle string   `db:"title" json:"question_title"`
 	QuestionID    string   `db:"qid" json:"question_id"`
 	Public        bool     `db:"public" json:"public"`
-	class         string   `db:"cid" json:"class_id"`
-	Answers       []string `json:"answers"`
+	ClassID       string   `db:"cid" json:"class_id"`
+	Answers       []answer `json:"answers"`
 }
 
 func validQuestionReq(request question) bool {
@@ -32,6 +32,7 @@ func createNewQuestion(w http.ResponseWriter, r *http.Request) (question, error)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return question, fmt.Errorf("createNewQuestion: unable to grab classID")
 	}
+
 	//validate class and cookie
 	//grab cookie
 	cookie, err := r.Cookie("UAT")
@@ -46,7 +47,7 @@ func createNewQuestion(w http.ResponseWriter, r *http.Request) (question, error)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return question, err
 	} else if !valid {
-		fmt.Println("bad request")
+		fmt.Println("bad request by: ", cookie.Value)
 		w.WriteHeader(http.StatusBadRequest)
 		return question, fmt.Errorf("createNewQuestion: invalid UAT")
 	}
@@ -111,7 +112,47 @@ func validOwnQuestion(questionID, UAT string) (bool, error) {
 		return false, err
 	}
 
-	//parse json
+	//count number of responses
+	count, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return count != 0, nil
+}
+
+/* Make question for given route public */
+func makeQuestionPublic(w http.ResponseWriter, r *http.Request) (question, error) {
+	question := question{}
+	vars := mux.Vars(r)
+
+	questionID, ok := vars["questionID"]
+	if !ok {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return question, fmt.Errorf("makeQuestionPublic: unable to grab questionID")
+	}
+	question.QuestionID = questionID
+
+	// validate class and cookie
+	// grab cookie
+	cookie, err := r.Cookie("UAT")
+	if err != nil {
+		fmt.Println("error in getting cookie")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return question, err
+	}
+
+	// validate cookie
+	if valid, err := validOwnQuestion(question.QuestionID, cookie.Value); err != nil {
+		fmt.Println("error in validating question")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return question, err
+	} else if !valid {
+		fmt.Println("bad request")
+		w.WriteHeader(http.StatusBadRequest)
+		return question, fmt.Errorf("makeQuestionPublic: invalid UAT")
+	}
+
+	// parse json
 	dataDec := json.NewDecoder(r.Body)
 
 	err = dataDec.Decode(&question)
@@ -119,10 +160,63 @@ func validOwnQuestion(questionID, UAT string) (bool, error) {
 		fmt.Println("decode: ", err)
 		return question, err
 	}
-	//count number of responses
-	count, err := res.RowsAffected()
+
+	// update db
+	err = updateQuestionDB(question)
 	if err != nil {
-		return false, err
+		fmt.Println("updateQuestionDB: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return question, err
 	}
-	return count != 0, nil
+
+	//fill up struct
+	err = fillQuestion(question)
+	if err != nil {
+		fmt.Println("fillQuestion: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return question, err
+	}
+
+	fmt.Printf("%#v\n", question)
+
+	return question, nil
+}
+
+func fillQuestion(question question) error {
+	q := `select * from question where qid = $1`
+	rows, err := db.Queryx(q, question.QuestionID)
+	if err != nil {
+		return err
+	}
+	if rows.Next() {
+		err = rows.StructScan(&question)
+		if err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("fillQuestion: no rows")
+	}
+
+	//fill up answers
+	err = fillAnswers(question)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func updateQuestionDB(question question) error {
+	q := `update question set public = true where qid = $1`
+
+	res, err := db.Exec(q, question.QuestionID)
+	if err != nil {
+		return err
+	}
+	if count, err := res.RowsAffected(); err != nil {
+		return err
+	} else if count != 1 {
+		return fmt.Errorf("updateQuestionDB: count != 1")
+	}
+	return nil
 }
