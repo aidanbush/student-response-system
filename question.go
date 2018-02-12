@@ -170,26 +170,113 @@ func makeQuestionPublic(w http.ResponseWriter, r *http.Request) (question, error
 	}
 
 	//fill up struct
-	err = fillQuestion(question)
+	err = fillQuestion(&question)
 	if err != nil {
 		fmt.Println("fillQuestion: ", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return question, err
 	}
 
-	fmt.Printf("%#v\n", question)
-
 	return question, nil
 }
 
-func fillQuestion(question question) error {
-	q := `select * from question where qid = $1`
+func getQuestions(w http.ResponseWriter, r *http.Request) ([]question, error) {
+	// get class
+	vars := mux.Vars(r)
+	questions := []question{}
+
+	// test if class exists
+	classID, ok := vars["classID"]
+	if !ok {
+		fmt.Println("getQuestions: can't find classID")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return questions, fmt.Errorf("createNewQuestion: unable to grab classID")
+	}
+
+	// validate class exists
+	ok, err := classExists(classID)
+	if err != nil {
+		fmt.Println("getQuestions: classExists: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return questions, err
+	} else if !ok {
+		fmt.Println("getQuestions: classID does not exist")
+		w.WriteHeader(http.StatusBadRequest)
+		return questions, fmt.Errorf("getQuestions: classID does not exist")
+	}
+
+	// get UAT
+	UAT, err := getUAT(w, r)
+	if err != nil {
+		fmt.Println("getQuestions: ", err)
+		if err != errNoUAT {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return questions, err
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		return questions, err
+	}
+
+	// validate in class
+	ok, err = inClass(UAT, classID)
+	if err != nil {
+		fmt.Println("getQuestions: inClass: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return questions, err
+	} else if !ok {
+		fmt.Println("getQuestions: pid ", UAT, "not in class ", classID)
+		w.WriteHeader(http.StatusBadRequest)
+		return questions, fmt.Errorf("getQuestions: inClass: not in class")
+	}
+
+	// get questions
+	questions, err = retrieveQuestions(classID)
+	if err != nil {
+		fmt.Println("getQuestions: retrieveQuestions: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return questions, err
+	}
+
+	// return questions
+	return questions, nil
+}
+
+func retrieveQuestions(classID string) ([]question, error) {
+	questions := []question{}
+
+	q := `select * from question where cid = $1`
+
+	rows, err := db.Queryx(q, classID)
+	if err != nil {
+		return questions, err
+	}
+
+	question := question{}
+	for rows.Next() {
+		err = rows.StructScan(&question)
+		if err != nil {
+			return questions, err
+		}
+		// fill w/ answers
+		err = fillAnswers(&question)
+		if err != nil {
+			return questions, err
+		}
+		// add to slice
+		questions = append(questions, question)
+	}
+
+	return questions, nil
+}
+
+func fillQuestion(question *question) error {
+	q := `select * from question where qid = $1, and public = true`
 	rows, err := db.Queryx(q, question.QuestionID)
 	if err != nil {
 		return err
 	}
 	if rows.Next() {
-		err = rows.StructScan(&question)
+		err = rows.StructScan(question)
 		if err != nil {
 			return err
 		}

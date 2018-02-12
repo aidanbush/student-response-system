@@ -3,12 +3,19 @@ package main
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"math/rand"
+	"net/http"
+	"time"
 
 	"github.com/lib/pq"
 )
 
 const md5DataLen = 15
+
+var errNoUAT = errors.New("no UAT cookie found")
 
 func pqslUniqueErr(err error) bool {
 	if pErr, ok := err.(*pq.Error); ok {
@@ -25,5 +32,49 @@ func genMD5(length int) string {
 
 	hash := md5.New()
 	sum := hash.Sum(data)
-	return hex.EncodeToString(sum[:length]) //convert to hex!!!
+	return hex.EncodeToString(sum[:length])
+}
+
+func getUAT(w http.ResponseWriter, r *http.Request) (string, error) {
+	// check if cookie exists for person else create one
+	cookies, err := r.Cookie("UAT")
+	if err != nil {
+		if err != http.ErrNoCookie {
+			fmt.Println("cookie: ", err)
+			return "", err
+		}
+		// return no UAT
+		return "", errNoUAT
+	} else {
+		// validate cookie
+		if !validCookie(cookies) {
+			fmt.Println("class: invalid cookie")
+			return "", fmt.Errorf("class: invalid cookie")
+		}
+	}
+	return cookies.Value, nil
+}
+
+func createUAT(person *person, w http.ResponseWriter) error {
+	//create person in db
+	err := createNewPerson(person)
+	if err != nil {
+		fmt.Println("createNewPerson: ", err)
+		return err
+	}
+
+	cookie := &http.Cookie{Name: "UAT", Value: person.Pid, Expires: time.Now().AddDate(0, 0, 1)}
+	http.SetCookie(w, cookie)
+	return nil
+}
+
+func getNameFromClassReq(requestClass *classReq, r *http.Request) error {
+	dataDec := json.NewDecoder(r.Body)
+
+	err := dataDec.Decode(&requestClass)
+	if err != nil {
+		fmt.Println("decode: ", err)
+		return err
+	}
+	return nil
 }

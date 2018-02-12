@@ -14,7 +14,7 @@ const answerUIDLen = 5
 type answer struct {
 	AnswerID   string `json:"answer_id" db:"aid"`
 	AnswerText string `json:"answer_text" db:"answer"`
-	QuestionID string `json:"question_id"`
+	QuestionID string `json:"question_id" db:"qid"`
 }
 
 func validAnswerReq(request answer) bool {
@@ -104,8 +104,8 @@ func insertAnswerDB(answer *answer) error {
 	return nil
 }
 
-func fillAnswers(question question) error {
-	q := `select * from answers where qid = $1`
+func fillAnswers(question *question) error {
+	q := `select * from answer where qid = $1`
 
 	rows, err := db.Queryx(q, question.QuestionID)
 	if err != nil {
@@ -113,7 +113,6 @@ func fillAnswers(question question) error {
 	}
 
 	answer := answer{}
-
 	for rows.Next() {
 		err = rows.StructScan(&answer)
 		if err != nil {

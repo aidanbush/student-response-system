@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 const classUIDLen = 5
@@ -134,4 +136,137 @@ func validTeachClass(classID, UAT string) (bool, error) {
 		return false, err
 	}
 	return count != 0, nil
+}
+
+func joinClass(w http.ResponseWriter, r *http.Request) (classReq, error) {
+	// get name
+	requestClass := classReq{}
+
+	// get class id
+	vars := mux.Vars(r)
+
+	// test if class exists
+	classID, ok := vars["classID"]
+	if !ok {
+		fmt.Println("joinClass: can't find classID")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return requestClass, fmt.Errorf("createNewQuestion: unable to grab classID")
+	}
+
+	// set classID
+	requestClass.Class.ClassID = classID
+
+	// test if class exists
+	exist, err := classExists(classID)
+	if err != nil {
+		fmt.Println("joinClass: classExists: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return requestClass, err
+	} else if !exist {
+		fmt.Println("joinClass: classID does not exist")
+		w.WriteHeader(http.StatusBadRequest)
+		return requestClass, fmt.Errorf("err join class: invalid class ID")
+	}
+
+	// test if have UAT
+	UAT, err := getUAT(w, r)
+	if err != nil {
+		fmt.Println("joinClass: new user")
+		// if errNoUAT create one
+		if err != errNoUAT {
+			fmt.Println("joinClass: getUAT: ", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return requestClass, err
+		}
+		// get name from request
+		err = getNameFromClassReq(&requestClass, r)
+		if err != nil {
+			fmt.Println("joinClass: getNameFromClassReq", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return requestClass, err
+		}
+		// create UAT
+		err = createUAT(&requestClass.Person, w)
+		if err != nil {
+			fmt.Println("joinClass: createUAT: ", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return requestClass, err
+		}
+	} else {
+		fmt.Println("joinClass: existing user")
+		// set persons pid
+		requestClass.Person.Pid = UAT
+		//test if pid exists
+		ok, err := validPid(requestClass.Person.Pid)
+		if err != nil {
+			fmt.Println("joinClass: validPid: ", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return requestClass, err
+		} else if !ok {
+			fmt.Println("joinClass: pid does not exist")
+			w.WriteHeader(http.StatusBadRequest)
+			return requestClass, fmt.Errorf("err join class: invalid UAT")
+		}
+		// load name from db
+		err = getName(&requestClass.Person)
+		if err != nil {
+			fmt.Println("joinClass: getName: ", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return requestClass, err
+		}
+	}
+
+	// join class
+	fmt.Printf("%#v\n", requestClass)
+	err = linkStudent(requestClass)
+	if err != nil {
+		fmt.Println("joinClass: linkStudent: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return requestClass, err
+	}
+
+	// fill in class
+	err = fillClass(&requestClass.Class)
+	if err != nil {
+		fmt.Println("joinClass: fillClass: ", err)
+		return requestClass, err
+	}
+
+	// return class object
+	return requestClass, nil
+}
+
+func classExists(classID string) (bool, error) {
+	q := `select * from class as C where C.cid = $1`
+
+	res, err := db.Exec(q, classID)
+	if err != nil {
+		return false, err
+	}
+
+	//count number of responses
+	count, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return count != 0, nil
+}
+
+func fillClass(class *class) error {
+	q := `select * from class where cid = $1`
+
+	rows, err := db.Queryx(q, class.ClassID)
+	if err != nil {
+		return err
+	}
+	if rows.Next() {
+		err = rows.StructScan(class)
+		if err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("fillClass: no rows")
+	}
+
+	return nil
 }

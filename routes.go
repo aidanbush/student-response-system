@@ -27,7 +27,20 @@ func handleCreateClass(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleJoinClass(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	class, err := joinClass(w, r)
+	if err != nil {
+		fmt.Println("joinClass: ", err)
+		return
+	}
+
+	jsonOut, err := json.Marshal(class)
+	if err != nil {
+		fmt.Println("json marshal: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "%s\n", string(jsonOut))
 	return
 }
 
@@ -92,7 +105,19 @@ func handleMakeQuesionPublic(w http.ResponseWriter, r *http.Request) {
 /* Student class interaction */
 
 func handleGetQuestions(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	questions, err := getQuestions(w, r)
+	if err != nil {
+		return
+	}
+
+	jsonOut, err := json.Marshal(questions)
+	if err != nil {
+		fmt.Println("json marshal: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "%s\n", string(jsonOut))
 	return
 }
 
