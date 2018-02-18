@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -11,12 +12,15 @@ import (
 
 const questionUIDLen = 5
 
+var errNoQuestion = errors.New("no question exists")
+
 type question struct {
-	QuestionTitle string   `db:"title" json:"question_title"`
-	QuestionID    string   `db:"qid" json:"question_id"`
-	Public        bool     `db:"public" json:"public"`
-	ClassID       string   `db:"cid" json:"class_id"`
-	Answers       []answer `json:"answers"`
+	QuestionTitle  string   `db:"title" json:"question_title"`
+	QuestionID     string   `db:"qid" json:"question_id"`
+	Public         bool     `db:"public" json:"public"`
+	ClassID        string   `db:"cid" json:"class_id"`
+	Answers        []answer `json:"answers"`
+	SelectedAnswer string   `json:"selected_answer"`
 }
 
 func validQuestionReq(request question) bool {
@@ -173,7 +177,11 @@ func makeQuestionPublic(w http.ResponseWriter, r *http.Request) (question, error
 	err = fillQuestion(&question)
 	if err != nil {
 		fmt.Println("fillQuestion: ", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		if err != errNoQuestion {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+		}
 		return question, err
 	}
 
@@ -190,7 +198,7 @@ func getQuestions(w http.ResponseWriter, r *http.Request) ([]question, error) {
 	if !ok {
 		fmt.Println("getQuestions: can't find classID")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return questions, fmt.Errorf("createNewQuestion: unable to grab classID")
+		return questions, fmt.Errorf("getQuestions: unable to grab classID")
 	}
 
 	// validate class exists
@@ -211,9 +219,9 @@ func getQuestions(w http.ResponseWriter, r *http.Request) ([]question, error) {
 		fmt.Println("getQuestions: ", err)
 		if err != errNoUAT {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return questions, err
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
 		}
-		w.WriteHeader(http.StatusBadRequest)
 		return questions, err
 	}
 
@@ -230,9 +238,9 @@ func getQuestions(w http.ResponseWriter, r *http.Request) ([]question, error) {
 	}
 
 	// get questions
-	questions, err = retrieveQuestions(classID)
+	questions, err = retrieveQuestionsUser(classID, UAT)
 	if err != nil {
-		fmt.Println("getQuestions: retrieveQuestions: ", err)
+		fmt.Println("getQuestions: retrieveQuestionsUser: ", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return questions, err
 	}
@@ -241,10 +249,73 @@ func getQuestions(w http.ResponseWriter, r *http.Request) ([]question, error) {
 	return questions, nil
 }
 
-func retrieveQuestions(classID string) ([]question, error) {
+func getAnswers(w http.ResponseWriter, r *http.Request) (question, error) {
+	question := question{}
+	vars := mux.Vars(r)
+	//get classID
+	classID, ok := vars["classID"]
+	if !ok {
+		fmt.Println("getAnswers: can't find classID")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return question, fmt.Errorf("getAnswers: unable to grab classID")
+	}
+
+	//get questionID
+	question.QuestionID, ok = vars["questionID"]
+	if !ok {
+		fmt.Println("getAnswers: can't find questionID")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return question, fmt.Errorf("getAnswers: unable to grab classID")
+	}
+
+	//get cookie
+	UAT, err := getUAT(w, r)
+	if err != nil {
+		fmt.Println("getAnswers: ", err)
+		if err != errNoUAT {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+		}
+		return question, err
+	}
+
+	//check if in class
+	ok, err = inClass(UAT, classID)
+	if err != nil {
+		fmt.Println("getAnswers: inClass: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return question, err
+	} else if !ok {
+		fmt.Println("getAnswers: pid ", UAT, "not in class ", classID)
+		w.WriteHeader(http.StatusBadRequest)
+		return question, fmt.Errorf("getAnswers: inClass: not in class")
+	}
+
+	// if question in class
+
+	//get question w/ answers
+	err = fillQuestion(&question)
+	if err != nil {
+		if err != errNoQuestion {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+		}
+		return question, err
+	}
+	//if not public return error
+	if !question.Public {
+		return question, fmt.Errorf("getAnswers: question not public")
+	}
+
+	return question, nil
+}
+
+func retrieveQuestionsUser(classID, UAT string) ([]question, error) {
 	questions := []question{}
 
-	q := `select * from question where cid = $1`
+	q := `select * from question where cid = $1 and public = true`
 
 	rows, err := db.Queryx(q, classID)
 	if err != nil {
@@ -262,6 +333,7 @@ func retrieveQuestions(classID string) ([]question, error) {
 		if err != nil {
 			return questions, err
 		}
+		// get answer
 		// add to slice
 		questions = append(questions, question)
 	}
@@ -269,8 +341,27 @@ func retrieveQuestions(classID string) ([]question, error) {
 	return questions, nil
 }
 
+func getUserAnswer(questionID, UAT string) (string, error) {
+	q := `select aid from answered where qid = $1 and pid = $2`
+	aid := ""
+
+	rows, err := db.Queryx(q, questionID, UAT)
+	if err != nil {
+		//if
+		return aid, err
+	}
+	if rows.Next() {
+		err := rows.Scan(&aid)
+		if err != nil {
+			return aid, err
+		}
+	}
+	//if found or not return nil error as
+	return aid, nil
+}
+
 func fillQuestion(question *question) error {
-	q := `select * from question where qid = $1, and public = true`
+	q := `select * from question where qid = $1 and public = true`
 	rows, err := db.Queryx(q, question.QuestionID)
 	if err != nil {
 		return err
@@ -281,7 +372,7 @@ func fillQuestion(question *question) error {
 			return err
 		}
 	} else {
-		return fmt.Errorf("fillQuestion: no rows")
+		return errNoQuestion
 	}
 
 	//fill up answers

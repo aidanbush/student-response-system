@@ -122,12 +122,36 @@ func handleGetQuestions(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleGetAnswers(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	question, err := getAnswers(w, r)
+	if err != nil {
+		return
+	}
+
+	jsonOut, err := json.Marshal(question)
+	if err != nil {
+		fmt.Println("json marshal: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "%s\n", string(jsonOut))
 	return
 }
 
 func handleSubmitAnswer(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	answer, err := submitAnswer(w, r)
+	if err != nil {
+		return
+	}
+
+	jsonOut, err := json.Marshal(answer)
+	if err != nil {
+		fmt.Println("json marshal: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "%s\n", string(jsonOut))
 	return
 }
 
