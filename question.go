@@ -188,6 +188,7 @@ func makeQuestionPublic(w http.ResponseWriter, r *http.Request) (question, error
 	return question, nil
 }
 
+// add returning selected question
 func getQuestions(w http.ResponseWriter, r *http.Request) ([]question, error) {
 	// get class
 	vars := mux.Vars(r)

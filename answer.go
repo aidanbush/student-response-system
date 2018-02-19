@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -10,6 +11,8 @@ import (
 )
 
 const answerUIDLen = 5
+
+var errUpdateNoRows = errors.New("updated no rows")
 
 type answer struct {
 	AnswerID   string `json:"answer_id" db:"aid"`
@@ -123,6 +126,7 @@ func submitAnswer(w http.ResponseWriter, r *http.Request) (answer, error) {
 	err = dataDec.Decode(&answer)
 	if err != nil {
 		fmt.Println("decode: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return answer, err
 	}
 
@@ -188,14 +192,44 @@ func changeAnswer(w http.ResponseWriter, r *http.Request) (answer, error) {
 	}
 
 	// get answerID
+	dataDec := json.NewDecoder(r.Body)
+
+	err = dataDec.Decode(&answer)
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		fmt.Println("decode: ", err)
+		return answer, err
+	}
 
 	// validAnswer
+	ok, err = validAnswer(answer.AnswerID, questionID)
+	if err != nil {
+		return answer, err
+	} else if !ok {
+		return answer, fmt.Errorf("submitAnswer: answer does not exits")
+	}
 
-	// insert
+	// update
+	err = updateAnswerDB(answer.AnswerID, questionID, UAT)
+	if err != nil {
+		if err != errUpdateNoRows {
+			fmt.Println("changeAnswer: updateAnswerDB: ", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		} else {
+			fmt.Println("changeAnswer: update on unanswered question")
+			w.WriteHeader(http.StatusBadRequest)
+		}
+		return answer, err
+	}
 
 	// grab answer out of db
+	err = fillAnswer(&answer)
+	if err != nil {
+		return answer, err
+	}
 
 	// return answer
+	return answer, nil
 }
 
 func submitAnswerDB(answerID, questionID, UAT string) error {
@@ -204,6 +238,25 @@ func submitAnswerDB(answerID, questionID, UAT string) error {
 	_, err := db.Exec(q, answerID, questionID, UAT)
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+// return error on
+func updateAnswerDB(answerID, questionID, UAT string) error {
+	q := `update answered set aid = $1 where qid = $2 and pid = $3`
+
+	res, err := db.Exec(q, answerID, questionID, UAT)
+	if err != nil {
+		return err
+	}
+
+	count, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if count == 0 {
+		return errUpdateNoRows
 	}
 	return nil
 }

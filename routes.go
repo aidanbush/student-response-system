@@ -156,6 +156,18 @@ func handleSubmitAnswer(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleChangeAnswer(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	answer, err := changeAnswer(w, r)
+	if err != nil {
+		return
+	}
+
+	jsonOut, err := json.Marshal(answer)
+	if err != nil {
+		fmt.Println("json marshal: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "%s\n", string(jsonOut))
 	return
 }
