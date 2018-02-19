@@ -288,12 +288,22 @@ func getAnswers(w http.ResponseWriter, r *http.Request) (question, error) {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return question, err
 	} else if !ok {
-		fmt.Println("getAnswers: pid ", UAT, "not in class ", classID)
+		fmt.Println("getAnswers: pid ", UAT, " not in class: ", classID)
 		w.WriteHeader(http.StatusBadRequest)
 		return question, fmt.Errorf("getAnswers: inClass: not in class")
 	}
 
 	// if question in class
+	ok, err = questionInClass(classID, question.QuestionID)
+	if err != nil {
+		fmt.Println("getAnswers: inClass: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return question, err
+	} else if !ok {
+		fmt.Println("getAnswers: qid: ", question.QuestionID, " not in class: ", classID)
+		w.WriteHeader(http.StatusBadRequest)
+		return question, fmt.Errorf("getAnswers: questionInClass: not in class")
+	}
 
 	//get question w/ answers
 	err = fillQuestion(&question)
@@ -305,6 +315,15 @@ func getAnswers(w http.ResponseWriter, r *http.Request) (question, error) {
 		}
 		return question, err
 	}
+
+	//add answer
+	question.SelectedAnswer, err = getUserAnswer(question.QuestionID, UAT)
+	if err != nil {
+		fmt.Println("getAnswers: retrieveQuestionsUser: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return question, err
+	}
+
 	//if not public return error
 	if !question.Public {
 		return question, fmt.Errorf("getAnswers: question not public")
@@ -335,6 +354,12 @@ func retrieveQuestionsUser(classID, UAT string) ([]question, error) {
 			return questions, err
 		}
 		// get answer
+		answer, err := getUserAnswer(question.QuestionID, UAT)
+		if err != nil {
+			// skip question
+			continue
+		}
+		question.SelectedAnswer = answer
 		// add to slice
 		questions = append(questions, question)
 	}
@@ -348,7 +373,6 @@ func getUserAnswer(questionID, UAT string) (string, error) {
 
 	rows, err := db.Queryx(q, questionID, UAT)
 	if err != nil {
-		//if
 		return aid, err
 	}
 	if rows.Next() {
@@ -398,4 +422,19 @@ func updateQuestionDB(question question) error {
 		return fmt.Errorf("updateQuestionDB: count != 1")
 	}
 	return nil
+}
+
+func questionInClass(classID, questionID string) (bool, error) {
+	q := `select count(*) from question where qid = $1 and cid = $2`
+
+	res, err := db.Exec(q, questionID, classID)
+	if err != nil {
+		return false, err
+	}
+
+	count, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return count != 0, err
 }
