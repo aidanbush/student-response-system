@@ -20,6 +20,11 @@ type answer struct {
 	QuestionID string `json:"question_id" db:"qid"`
 }
 
+type response struct {
+	AnswerID string `json:"answer_id" db:"aid"`
+	Count    int    `json:"count" db:"count"`
+}
+
 func validAnswerReq(request answer) bool {
 	return strings.Compare(request.AnswerText, "") != 0
 }
@@ -80,6 +85,85 @@ func createNewAnswer(w http.ResponseWriter, r *http.Request) (answer, error) {
 	}
 
 	return answer, nil
+}
+
+func getSubmittedAnswers(w http.ResponseWriter, r *http.Request) ([]response, error) {
+	vars := mux.Vars(r)
+	answers := []response{}
+
+	// get classID from route
+	classID, ok := vars["classID"]
+	if !ok {
+		fmt.Println("getSubmittedAnswers: can't find classID")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return answers, fmt.Errorf("getSubmittedAnswers: unable to grab classID")
+	}
+
+	// validate class exists
+	ok, err := classExists(classID)
+	if err != nil {
+		fmt.Println("getSubmittedAnswers: classExists: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return answers, err
+	} else if !ok {
+		fmt.Println("getSubmittedAnswers: classID does not exist")
+		w.WriteHeader(http.StatusBadRequest)
+		return answers, fmt.Errorf("getSubmittedAnswers: classID does not exist")
+	}
+
+	// get UAT
+	UAT, err := getUAT(w, r)
+	if err != nil {
+		fmt.Println("getSubmittedAnswers: ", err)
+		if err != errNoUAT {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+		}
+		return answers, err
+	}
+
+	// validate teaches class
+	ok, err = validTeachClass(classID, UAT)
+	if err != nil {
+		fmt.Println("getSubmittedAnswers: inClass: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return answers, err
+	} else if !ok {
+		fmt.Println("getSubmittedAnswers: pid ", UAT, "not in class ", classID)
+		w.WriteHeader(http.StatusBadRequest)
+		return answers, fmt.Errorf("getSubmittedAnswers: inClass: not in class")
+	}
+
+	// get questionID
+	questionID, ok := vars["questionID"]
+	if !ok {
+		fmt.Println("getSubmittedAnswers: can't find questionID")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return answers, fmt.Errorf("getSubmittedAnswers: unable to grab classID")
+	}
+
+	// validate question in class
+	ok, err = questionInClass(classID, questionID)
+	if err != nil {
+		fmt.Println("getSubmittedAnswers: inClass: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return answers, err
+	} else if !ok {
+		fmt.Println("getSubmittedAnswers: qid: ", questionID, " not in class: ", classID)
+		w.WriteHeader(http.StatusBadRequest)
+		return answers, fmt.Errorf("getSubmittedAnswers: questionInClass: not in class")
+	}
+
+	// get answers
+	answers, err = getResponses(questionID)
+	if err != nil {
+		fmt.Println("getSubmittedAnswers: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return answers, err
+	}
+
+	return answers, nil
 }
 
 // return question w/ correct selected answer
@@ -230,6 +314,27 @@ func changeAnswer(w http.ResponseWriter, r *http.Request) (answer, error) {
 
 	// return answer
 	return answer, nil
+}
+
+func getResponses(questionID string) ([]response, error) {
+	q := `select aid, count(*) from answered where qid = $1 group by aid`
+
+	responses := []response{}
+
+	rows, err := db.Queryx(q, questionID)
+	if err != nil {
+		return responses, err
+	}
+
+	response := response{}
+	for rows.Next() {
+		err = rows.StructScan(&response)
+		if err != nil {
+			return responses, err
+		}
+		responses = append(responses, response)
+	}
+	return responses, nil
 }
 
 func submitAnswerDB(answerID, questionID, UAT string) error {

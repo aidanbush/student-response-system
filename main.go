@@ -40,9 +40,11 @@ func main() {
 	// instructor class management
 	r.HandleFunc("/api/v0/instructors/classes/{classID}/questions", handleInstrGetQuestions).Methods("GET")
 	r.HandleFunc("/api/v0/instructors/classes/{classID}/questions", handleCreateQuesion).Methods("POST")
+	// add all question responses
 	r.HandleFunc("/api/v0/instructors/classes/{classID}/questions/{questionID}", handleDeleteQuesion).Methods("DELETE")
 	r.HandleFunc("/api/v0/instructors/classes/{classID}/questions/{questionID}", handleAddAnswer).Methods("POST")
 	r.HandleFunc("/api/v0/instructors/classes/{classID}/questions/{questionID}", handleMakeQuesionPublic).Methods("PUT")
+	r.HandleFunc("/api/v0/instructors/classes/{classID}/questions/{questionID}", handleGetQuesionAnswers).Methods("GET")
 
 	// student class interaction
 	r.HandleFunc("/api/v0/classes/{classID}/questions", handleGetQuestions).Methods("GET")

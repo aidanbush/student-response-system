@@ -52,7 +52,7 @@ func handleInstrGetQuestions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jsonOut, err := json.Marshal(question)
+	jsonOut, err := json.Marshal(questions)
 	if err != nil {
 		fmt.Println("json marshal: ", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -81,8 +81,11 @@ func handleCreateQuesion(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleDeleteQuesion(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	return
+	err := deleteQuestion(w, r)
+	if err != nil {
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func handleAddAnswer(w http.ResponseWriter, r *http.Request) {
@@ -117,6 +120,22 @@ func handleMakeQuesionPublic(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintf(w, "%s\n", string(jsonOut))
 	return
+}
+
+func handleGetQuesionAnswers(w http.ResponseWriter, r *http.Request) {
+	answers, err := getSubmittedAnswers(w, r)
+	if err != nil {
+		return
+	}
+
+	jsonOut, err := json.Marshal(answers)
+	if err != nil {
+		fmt.Println("json marshal: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "%s\n", string(jsonOut))
 }
 
 /* Student class interaction */

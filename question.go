@@ -107,6 +107,79 @@ func insertQuestionDB(question *question, class string) error {
 	return nil
 }
 
+func deleteQuestion(w http.ResponseWriter, r *http.Request) error {
+	vars := mux.Vars(r)
+	// get classID
+	classID, ok := vars["classID"]
+	if !ok {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return fmt.Errorf("deleteQuestion: unable to grab classID")
+	}
+
+	// get questionID
+	questionID, ok := vars["questionID"]
+	if !ok {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return fmt.Errorf("deleteQuestion: unable to grab questionID")
+	}
+
+	// get UAT
+	UAT, err := getUAT(w, r)
+	if err != nil {
+		fmt.Println("deleteQuestion: ", err)
+		if err != errNoUAT {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+		}
+		return err
+	}
+
+	// if teach class
+	ok, err = validTeachClass(classID, UAT)
+	if err != nil {
+		fmt.Println("deleteQuestion: inClass: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return err
+	} else if !ok {
+		fmt.Println("deleteQuestion: pid ", UAT, "not in class ", classID)
+		w.WriteHeader(http.StatusBadRequest)
+		return fmt.Errorf("deleteQuestion: inClass: not in class")
+	}
+
+	// if question in class
+	ok, err = questionInClass(classID, questionID)
+	if err != nil {
+		fmt.Println("deleteQuestion: inClass: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return err
+	} else if !ok {
+		fmt.Println("deleteQuestion: qid: ", questionID, " not in class: ", classID)
+		w.WriteHeader(http.StatusBadRequest)
+		return fmt.Errorf("deleteQuestion: questionInClass: not in class")
+	}
+
+	// delete question
+	err = deleteQuestionDB(questionID)
+	if err != nil {
+		fmt.Println("deleteQuestion: deleteQuesitonDB: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return err
+	}
+
+	return nil
+}
+
+func deleteQuestionDB(questionID string) error {
+	q := `delete from answered where qid = $1; delete from answer where qid = $1; delete from question where qid = $1`
+
+	_, err := db.Exec(q, questionID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func validOwnQuestion(questionID, UAT string) (bool, error) {
 	q := `select Q.qid from person as P, teaches as T, question as Q
 		where P.pid = $1 and P.pid = T.pid and Q.cid = T.cid and Q.qid = $2`
@@ -189,11 +262,10 @@ func makeQuestionPublic(w http.ResponseWriter, r *http.Request) (question, error
 }
 
 func instrGetQuestions(w http.ResponseWriter, r *http.Request) ([]question, error) {
-	// get class
 	vars := mux.Vars(r)
 	questions := []question{}
 
-	// test if class exists
+	// get classID from route
 	classID, ok := vars["classID"]
 	if !ok {
 		fmt.Println("getQuestions: can't find classID")
@@ -226,7 +298,7 @@ func instrGetQuestions(w http.ResponseWriter, r *http.Request) ([]question, erro
 	}
 
 	// validate teaches class
-	ok, err = validTeachClass(UAT, classID)
+	ok, err = validTeachClass(classID, UAT)
 	if err != nil {
 		fmt.Println("getQuestions: inClass: ", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
