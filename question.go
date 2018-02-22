@@ -188,6 +188,67 @@ func makeQuestionPublic(w http.ResponseWriter, r *http.Request) (question, error
 	return question, nil
 }
 
+func instrGetQuestions(w http.ResponseWriter, r *http.Request) ([]question, error) {
+	// get class
+	vars := mux.Vars(r)
+	questions := []question{}
+
+	// test if class exists
+	classID, ok := vars["classID"]
+	if !ok {
+		fmt.Println("getQuestions: can't find classID")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return questions, fmt.Errorf("getQuestions: unable to grab classID")
+	}
+
+	// validate class exists
+	ok, err := classExists(classID)
+	if err != nil {
+		fmt.Println("getQuestions: classExists: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return questions, err
+	} else if !ok {
+		fmt.Println("getQuestions: classID does not exist")
+		w.WriteHeader(http.StatusBadRequest)
+		return questions, fmt.Errorf("getQuestions: classID does not exist")
+	}
+
+	// get UAT
+	UAT, err := getUAT(w, r)
+	if err != nil {
+		fmt.Println("getQuestions: ", err)
+		if err != errNoUAT {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+		}
+		return questions, err
+	}
+
+	// validate teaches class
+	ok, err = validTeachClass(UAT, classID)
+	if err != nil {
+		fmt.Println("getQuestions: inClass: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return questions, err
+	} else if !ok {
+		fmt.Println("getQuestions: pid ", UAT, "not in class ", classID)
+		w.WriteHeader(http.StatusBadRequest)
+		return questions, fmt.Errorf("getQuestions: inClass: not in class")
+	}
+
+	// get questions
+	questions, err = retrieveQuestionsInstr(classID)
+	if err != nil {
+		fmt.Println("getQuestions: retrieveQuestionsUser: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return questions, err
+	}
+
+	// return questions
+	return questions, nil
+}
+
 // add returning selected question
 func getQuestions(w http.ResponseWriter, r *http.Request) ([]question, error) {
 	// get class
@@ -330,6 +391,34 @@ func getAnswers(w http.ResponseWriter, r *http.Request) (question, error) {
 	}
 
 	return question, nil
+}
+
+func retrieveQuestionsInstr(classID string) ([]question, error) {
+	questions := []question{}
+
+	q := `select * from question where cid = $1`
+
+	rows, err := db.Queryx(q, classID)
+	if err != nil {
+		return questions, err
+	}
+
+	question := question{}
+	for rows.Next() {
+		err = rows.StructScan(&question)
+		if err != nil {
+			return questions, err
+		}
+		// fill w/ answers
+		err = fillAnswers(&question)
+		if err != nil {
+			return questions, err
+		}
+		// add to slice
+		questions = append(questions, question)
+	}
+
+	return questions, nil
 }
 
 func retrieveQuestionsUser(classID, UAT string) ([]question, error) {
