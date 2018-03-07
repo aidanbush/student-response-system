@@ -1,4 +1,11 @@
-/* login page */
+/*******************
+ * Global Variables
+ ******************/
+var username:string = "";
+
+/*************
+ * login page
+ ************/
 type createRequest = {
     class: Class;
     person: person;
@@ -81,17 +88,18 @@ function onJoinClassBtnClick() {
     }
     let classID = classIDInput.value;
 
-    //get name
     let nameInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#student_name");
-    if (nameInput.value === "") {
+    if (nameInput.value === "" && username === "") {
         joinClassReqFail("Error: Requires your name");
         return;
+    } else if (username === "") {
+        username = nameInput.value;
     }
 
     // create request json object
     let reqJSON: joinRequest = {
         person: {
-            name: nameInput.value,
+            name: username,
         },
     };
 
@@ -104,7 +112,7 @@ function onJoinClassBtnClick() {
             let res: XMLHttpRequestResponseType = JSON.parse(req.responseText);
             console.log("join class req success", res);
             // TODO: implement switching pages
-            return
+            return;
         }
         joinClassReqFail("Failed to join class");
     });
@@ -123,17 +131,18 @@ function onCreateClassBtnClick() {
         return;
     }
 
-    // TODO: check if have name already
     let nameInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#instructor_name");
-    if (nameInput.value === "") {
+    if (nameInput.value === "" && username === "") {
         createClassReqFail("Error: Requires your name");
         return;
+    } else if (username === "") {
+        username = nameInput.value;
     }
 
     // create request json object
     let reqJSON: createRequest = {
         person: {
-            name: nameInput.value,
+            name: username,
         },
         class: {
             class_name: classNameInput.value,
@@ -160,7 +169,7 @@ function onCreateClassBtnClick() {
     });
 
     req.addEventListener("abort", function () {
-        createClassReqFail("Error: Can't connect to server")
+        createClassReqFail("Error: Can't connect to server");
     });
 
     req.open("POST", `/api/v0/classes`);
@@ -185,17 +194,79 @@ function createClassReqFail(error: string) {
     console.log("create class error: ", error);
 }
 
-/************
- * listeners
- ***********/
+/******************************
+ * login switch view functions
+ *****************************/
+function switchInstructorClassView() {
+    // hide login page
+
+    // call display view
+}
+
+function switchStudentClassView() {
+    // hide login page
+
+    // call display view
+}
+
+/*******************
+ * login hide views
+ ******************/
+function hideLoginPage() {
+    // remove join and create divs
+    let joinDiv: HTMLElement = <HTMLElement>document.querySelector("#join");
+    joinDiv.innerHTML = "";
+
+    let createDiv: HTMLElement = <HTMLElement>document.querySelector("#create");
+    joinDiv.innerHTML = "";
+
+    //hide login page
+    let loginDiv: HTMLElement = <HTMLElement>document.querySelector("#new");
+    loginDiv.classList.add("hidden");
+    //loginDiv.
+}
+
+/******************
+ * login listeners
+ *****************/
 function setupLoginListeners() {
-    let joinHeading = document.querySelector("#join_heading");
+    let joinHeading: HTMLElement = <HTMLElement>document.querySelector("#join_heading");
     joinHeading.addEventListener("click", onLoginJoinClick);
 
-    let createHeading = document.querySelector("#create_heading");
+    let createHeading: HTMLElement = <HTMLElement>document.querySelector("#create_heading");
     createHeading.addEventListener("click", onLoginCreateClick);
 }
 
+/*******************
+ * Instructor Views
+ ******************/
+
+function displayInstructorPage() {
+    let instructorDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_page");
+    instructorDiv.classList.remove("hidden");
+}
+
+/*****************************
+ * Instructor Class Selection
+ ****************************/
+
+function displayInstructorSelection() {
+    displayInstructorPage();
+
+    // show new div
+    let selectionDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_selection_page");
+    selectionDiv.classList.remove("hidden");
+}
+
+function fillClassSelection() {
+    // request classes
+    // when done fill page
+    // say currently loading
+}
+
+/*****************
+ * main functions
+ ****************/
 function setupListeners() {
     setupLoginListeners();
 }
