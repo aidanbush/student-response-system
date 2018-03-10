@@ -58,6 +58,34 @@
 
 <!-- Instructor pages -->
 <div id="instructor_page" class="hidden">
+<!-- page doT templates -->
+    <script id="instructor_class_page_template" type="x-dot-template">
+        <h3 class="page_subheader">Class: {{=it.name}} ({{=it.class_id}})</h3>
+        <div class="question_list" id="instructor_question_list">
+            <ul>
+            {{~it.questions :value}}
+                <li class="question">
+                    <div class="question_name">{{=value.question_title}}</div>
+                    <ul>
+                        {{~value.answers :answer}}
+                        <li>
+                            <div>{{=answer.answer_text}}</div>
+                            <button class="answer_delete_btn">delete answer</button>
+                        </li>
+                        {{~}}
+                    </ul>
+                </li>
+                <button class="question_delete_btn">delete question</button>
+                <button class="question_add_answer_btn">add answer</button>
+                {{?value.public === undefined || value.public === false}}
+                    <button class="question_make_public_btn">make public</button>
+                {{?}}
+                <button class="question_view_results_btn">view results</button>
+            {{~}}
+            </ul>
+        </div>
+    </script>
+<!-- page contents -->
     <div class="page_header">
         <h2>Instructor</h2>
         <h3>Hello: name</h3>
@@ -69,10 +97,6 @@
         </div>
     </div>
     <div id="instructor_class_page" class="hidden">
-        <h3 class="page_subheader">Class: name</h3>
-        <div class="question_list" id="instructor_question_list">
-            'table of questions'
-        </div>
     </div>
 </div>
 
