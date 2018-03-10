@@ -11,7 +11,8 @@ import (
 func handleCreateClass(w http.ResponseWriter, r *http.Request) {
 	class, err := createNewClass(w, r)
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		fmt.Println("createNewClass: ", err)
+		//http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 

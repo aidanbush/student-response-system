@@ -55,17 +55,22 @@ func createNewClass(w http.ResponseWriter, r *http.Request) (classReq, error) {
 		return requestClass, fmt.Errorf("class: invalid request")
 	}
 
+	// log request class
+	fmt.Println("request create class\nclass name: ", requestClass.Class.ClassName, "\nperson name: ", requestClass.Person.Name)
+
 	// check if cookie exists for person else create one
 	cookies, err := r.Cookie("UAT")
 	if err != nil {
 		if err != http.ErrNoCookie {
 			fmt.Println("cookie: ", err)
+			w.WriteHeader(http.StatusBadRequest)
 			return requestClass, err
 		}
 		// create new person
 		err = createNewPerson(&requestClass.Person)
 		if err != nil {
 			fmt.Println("createNewPerson: ", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return requestClass, err
 		}
 		//create cookie
@@ -75,21 +80,27 @@ func createNewClass(w http.ResponseWriter, r *http.Request) (classReq, error) {
 		// validate cookie
 		if !validCookie(cookies) {
 			fmt.Println("class: invalid cookie")
+			w.WriteHeader(http.StatusBadRequest)
 			return requestClass, fmt.Errorf("class: invalid cookie")
 		}
+		//set pid
+		requestClass.Person.Pid = cookies.Value
 	}
 
 	// add class to db
 	err = insertClassDB(&requestClass.Class)
 	if err != nil {
 		fmt.Println("insertClassDB: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return requestClass, err
 	}
 
 	//make teacher of class
 	err = linkTeacher(requestClass)
 	if err != nil {
+		fmt.Println("cid: ", requestClass.Class.ClassID, "\npid: ", requestClass.Person.Pid)
 		fmt.Println("linkTeacher: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return requestClass, err
 	}
 
