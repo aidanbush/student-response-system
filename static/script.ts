@@ -1,16 +1,47 @@
 /*******************
  * Global Variables
  ******************/
+
+type person = {
+    name: string;
+};
+
+type answer = {
+    answer_id: string;
+    answer_text: string;
+    question_id: string;
+}
+
+type question = {
+    question_title: string;
+    question_id: string;
+    public:boolean;
+    class_id: string;
+    answers: answer[];
+    selected_answer: string;
+
+};
+
+type Class = {
+    class_name: string;
+    class_id: string;
+    questions: question[];
+};
+
 type globals = {
     name: string;
     teachIDs: string[];
     takeIDs: string[];
+    classList: Class[];
+    currentClass: string;
 };
 
 var info: globals = {
     name: null,
     teachIDs: [],
     takeIDs: [],
+    classList: [],
+    currentClass: null,
 };
 
 var username:string = "";
@@ -25,15 +56,6 @@ type createRequest = {
 
 type joinRequest = {
     person: person;
-};
-
-type person = {
-    name: string;
-};
-
-type Class = {
-    class_name: string;
-    class_id: string;
 };
 
 /**************************
@@ -171,10 +193,12 @@ function onCreateClassBtnClick() {
     // response listener
     req.addEventListener("load", function () {
         if (req.readyState === 4 && req.status === 200) {
-            let res: XMLHttpRequestResponseType = JSON.parse(req.responseText);
+            let res: createRequest = JSON.parse(req.responseText);
             console.log("create class req success", res);
             // TODO: implement switching pages
-            //switchInstructorClassView(res.class_id);
+            info.classList.push(res.class);
+            info.currentClass = res.class.class_id;
+            switchInstructorClassView(res.class);
             return;
         }
         createClassReqFail("Error: Failed to create class");
@@ -213,12 +237,12 @@ function createClassReqFail(error: string) {
 /******************************
  * login switch view functions
  *****************************/
-function switchInstructorClassView(classID: string) {
+function switchInstructorClassView(Class: Class) {
     // hide login page
     hideLoginPage();
 
     // call display view
-    displayInstructorClassPage(classID);
+    displayInstructorClassPage(Class);
 }
 
 function switchStudentClassView() {
@@ -266,8 +290,8 @@ function displayInstructorPage() {
 /*****************************
  * Instructor Class Selection
  ****************************/
-function displayInstructorClassPage(classID: string) {
-    // request class info
+function displayInstructorClassPage(Class: Class) {
+    // request questions
 
     // display instructor page
     displayInstructorPage();
@@ -275,6 +299,8 @@ function displayInstructorClassPage(classID: string) {
     // display class page
     let classDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_page");
     classDiv.classList.remove("hidden");
+
+    // set name and class id
 }
 
 function displayInstructorSelection() {
