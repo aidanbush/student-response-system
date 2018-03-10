@@ -1,6 +1,18 @@
 /*******************
  * Global Variables
  ******************/
+type globals = {
+    name: string;
+    teachIDs: string[];
+    takeIDs: string[];
+};
+
+var info: globals = {
+    name: null,
+    teachIDs: [],
+    takeIDs: [],
+};
+
 var username:string = "";
 
 /*************
@@ -89,17 +101,19 @@ function onJoinClassBtnClick() {
     let classID = classIDInput.value;
 
     let nameInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#student_name");
-    if (nameInput.value === "" && username === "") {
+    if (nameInput.value === "" && info.name === null) {
         joinClassReqFail("Error: Requires your name");
         return;
-    } else if (username === "") {
-        username = nameInput.value;
+    } else if (info.name === null) {
+        info.name = nameInput.value;
     }
+
+    console.log("name: ", info.name);
 
     // create request json object
     let reqJSON: joinRequest = {
         person: {
-            name: username,
+            name: info.name,
         },
     };
 
@@ -112,6 +126,7 @@ function onJoinClassBtnClick() {
             let res: XMLHttpRequestResponseType = JSON.parse(req.responseText);
             console.log("join class req success", res);
             // TODO: implement switching pages
+            // add class_id to list
             return;
         }
         joinClassReqFail("Failed to join class");
@@ -132,17 +147,17 @@ function onCreateClassBtnClick() {
     }
 
     let nameInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#instructor_name");
-    if (nameInput.value === "" && username === "") {
+    if (nameInput.value === "" && info.name === null) {
         createClassReqFail("Error: Requires your name");
         return;
-    } else if (username === "") {
-        username = nameInput.value;
+    } else if (info.name === null) {
+        info.name = nameInput.value;
     }
 
     // create request json object
     let reqJSON: createRequest = {
         person: {
-            name: username,
+            name: info.name,
         },
         class: {
             class_name: classNameInput.value,
@@ -159,6 +174,7 @@ function onCreateClassBtnClick() {
             let res: XMLHttpRequestResponseType = JSON.parse(req.responseText);
             console.log("create class req success", res);
             // TODO: implement switching pages
+            //switchInstructorClassView(res.class_id);
             return;
         }
         createClassReqFail("Error: Failed to create class");
@@ -197,10 +213,12 @@ function createClassReqFail(error: string) {
 /******************************
  * login switch view functions
  *****************************/
-function switchInstructorClassView() {
+function switchInstructorClassView(classID: string) {
     // hide login page
+    hideLoginPage();
 
     // call display view
+    displayInstructorClassPage(classID);
 }
 
 function switchStudentClassView() {
@@ -240,7 +258,6 @@ function setupLoginListeners() {
 /*******************
  * Instructor Views
  ******************/
-
 function displayInstructorPage() {
     let instructorDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_page");
     instructorDiv.classList.remove("hidden");
@@ -249,6 +266,16 @@ function displayInstructorPage() {
 /*****************************
  * Instructor Class Selection
  ****************************/
+function displayInstructorClassPage(classID: string) {
+    // request class info
+
+    // display instructor page
+    displayInstructorPage();
+
+    // display class page
+    let classDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_page");
+    classDiv.classList.remove("hidden");
+}
 
 function displayInstructorSelection() {
     displayInstructorPage();
@@ -256,12 +283,6 @@ function displayInstructorSelection() {
     // show new div
     let selectionDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_selection_page");
     selectionDiv.classList.remove("hidden");
-}
-
-function fillClassSelection() {
-    // request classes
-    // when done fill page
-    // say currently loading
 }
 
 /*****************
