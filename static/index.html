@@ -59,14 +59,20 @@
 <!-- Instructor pages -->
 <div id="instructor_page" class="hidden">
 <!-- page doT templates -->
+    <script id="instr_question_template" type="x-dot-template">
+        <li>
+            <div>{{=it.answer_text}}</div>
+            <button class="answer_delete_btn" id="ansDel_{{=it.answer_id}}">delete answer</button>
+        </li>
+    </script>
     <script id="instructor_class_page_template" type="x-dot-template">
         <h3 class="page_subheader">Class: {{=it.class_name}} ({{=it.class_id}})</h3>
-        <div class="question_list" id="instructor_question_list">
-            <ul>
+        <div class="question_list">
+            <ul id="instr_question_list">
             {{~it.questions :value}}
                 <li class="question">
                     <div class="question_name">{{=value.question_title}}</div>
-                    <ul>
+                    <ul id="ansList_{{=value.question_id}}">
                         {{~value.answers :answer}}
                         <li>
                             <div>{{=answer.answer_text}}</div>
