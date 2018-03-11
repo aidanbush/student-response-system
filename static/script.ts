@@ -184,6 +184,7 @@ function onCreateClassBtnClick() {
         class: {
             class_name: classNameInput.value,
             class_id: null,
+            questions: [],
         },
     };
 
@@ -283,15 +284,45 @@ function setupLoginListeners() {
  * Instructor Views
  ******************/
 function displayInstructorPage() {
+    // TODO set name
+    let instructorNameDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_display_name");
+    instructorNameDiv.innerHTML = `Hello ${info.name}`;
+
     let instructorDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_page");
     instructorDiv.classList.remove("hidden");
 }
 
-/*****************************
- * Instructor Class Selection
- ****************************/
+/************************
+ * Instructor Class View
+ ***********************/
 function displayInstructorClassPage(Class: Class) {
     // request questions
+    let req: XMLHttpRequest = new XMLHttpRequest();
+
+    // response listener
+    req.addEventListener("load", function () {
+        if (req.readyState === 4 && req.status === 200) {
+            // get add questions to class object
+            let res: question[] = JSON.parse(req.responseText);
+            console.log("get questions req success", res);
+
+            Class.questions = res;
+            instructorClassDisplayQuestions(Class);
+            return;
+        }
+        displayInstructorClassFail("Error: Failed to create class");
+    });
+
+    req.addEventListener("error", function () {
+        displayInstructorClassFail("Error: Can't connect to server");
+    });
+
+    req.addEventListener("abort", function () {
+        displayInstructorClassFail("Error: Can't connect to server");
+    });
+
+    req.open("GET", `/api/v0/instructors/classes/${Class.class_id}/questions`);
+    req.send();
 
     // display instructor page
     displayInstructorPage();
@@ -299,16 +330,79 @@ function displayInstructorClassPage(Class: Class) {
     // display class page
     let classDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_page");
     classDiv.classList.remove("hidden");
-
-    // set name and class id
 }
 
+function instructorClassDisplayQuestions(Class: Class) {
+    let classPageDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_page");
+
+    // obtain the template
+    let template: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_page_template");
+
+    // compile the template
+    let func = doT.template(template.innerHTML);
+    // render the data into the template
+    let rendered = func(Class);
+    // insert the rendered template into the DOM
+    classPageDiv.innerHTML = rendered;
+
+    // add create question listener
+
+    // add answer event listeners
+}
+
+/*****************************
+ * Instructor Class Listeners
+ ****************************/
+
+function instructorClassQuestionListeners() {
+    let deleteQuestions = document.querySelectorAll("#instrQuestionDel_*");
+    for (var i = 0; i < deleteQuestions.length; ++i) {
+        // deleteQuestions[i].split("_")[1]
+    }
+
+    let addAnswers = document.querySelectorAll("#instrQuestionAdd_*");
+    for (var i = 0; i < addAnswers.length; ++i) {
+        // addAnswers[i].split("_")[1]
+    }
+
+    let questionsPublic = document.querySelectorAll("#instrQuestionPub_*");
+    for (var i = 0; i < questionsPublic.length; ++i) {
+        // questionsPublic[i].split("_")[1]
+    }
+
+    let questionsResults = document.querySelectorAll("#instrQuestionRes_*");
+    for (var i = 0; i < questionsResults.length; ++i) {
+        // questionsResults[i].split("_")[1]
+    }
+
+    instructorClassAnswerListeners();
+}
+
+function instructorClassAnswerListeners() {
+    let deleteAnswers = document.querySelectorAll("#ansDel_*");
+    // for each deleteAnswers
+    for (var i = 0; i < deleteAnswers.length; ++i) {
+        // deleteAnswers[i].split("_")[1]
+    }
+}
+
+/*****************************
+ * Instructor Class Selection
+ ****************************/
 function displayInstructorSelection() {
     displayInstructorPage();
 
     // show new div
     let selectionDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_selection_page");
     selectionDiv.classList.remove("hidden");
+}
+
+/*************************************
+ * instructor failed request handlers
+ ************************************/
+
+function displayInstructorClassFail(error: string) {
+    // body...
 }
 
 /*****************
