@@ -61,8 +61,13 @@
 <!-- page doT templates -->
     <script id="instr_question_template" type="x-dot-template">
         <li>
-            <div>{{=it.answer_text}}</div>
-            <button class="answer_delete_btn" id="ansDel_{{=it.answer_id}}">delete answer</button>
+            <div>{{=it.question_title}}</div>
+            <button id="instrQuestionDel_{{=it.question_id}}">delete question</button>
+            <button id="instrQuestionAdd_{{=it.question_id}}">add answer</button>
+            {{?it.public === undefined || it.public === false}}
+                <button class="instrQuestionPub_{{=it.question_id}}">make public</button>
+            {{?}}
+            <button id="instrQuestionRes_{{=it.question_id}}">view results</button>
         </li>
     </script>
     <script id="instructor_class_page_template" type="x-dot-template">
@@ -81,12 +86,12 @@
                         {{~}}
                     </ul>
                 </li>
-                <button id="instrQuestionDel_{{=question.question_id}}">delete question</button>
-                <button id="instrQuestionAdd_{{=question.question_id}}">add answer</button>
+                <button id="instrQuestionDel_{{=value.question_id}}">delete question</button>
+                <button id="instrQuestionAdd_{{=value.question_id}}">add answer</button>
                 {{?value.public === undefined || value.public === false}}
-                    <button class="instrQuestionPub_{{=question.question_id}}">make public</button>
+                    <button class="instrQuestionPub_{{=value.question_id}}">make public</button>
                 {{?}}
-                <button id="instrQuestionRes_{{=question.question_id}}">view results</button>
+                <button id="instrQuestionRes_{{=value.question_id}}">view results</button>
             {{~}}
             </ul>
             <div id="instr_new_question">
