@@ -345,14 +345,26 @@ function instructorClassDisplayQuestions(Class: Class) {
     classPageDiv.innerHTML = rendered;
 
     // add listeners
+    instructorClassListeners();
 }
 
 /*********************************
  * Instructor Class View updating
  ********************************/
 function instructorClassAddQuestion(question: question) {
-    // using doT template create html
+    let questionList: HTMLElement = <HTMLElement>document.querySelector("#instr_question_list");
+
+    // obtain the template
+    let template: HTMLElement = <HTMLElement>document.querySelector("#instr_question_template");
+
+    // compile the template
+    let func = doT.template(template.innerHTML);
+    // render the data into the template
+    let rendered = func(question);
+    // insert the rendered template into the DOM
+
     // insert into end of questions list
+    questionList.appendChild(rendered);
 }
 
 /*****************************
@@ -387,7 +399,9 @@ function onCreateQuestionClick() {
             let res: question = JSON.parse(req.responseText);
             console.log("create question req success", res);
 
-            // Class.questions.append(res);
+            // insert question to array
+            info.classList.filter(x => x.class_id = info.currentClass)[0].questions.push(res);
+
             instructorClassAddQuestion(res);
             return;
         }
