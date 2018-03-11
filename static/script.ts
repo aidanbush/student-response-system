@@ -19,7 +19,6 @@ type question = {
     class_id: string;
     answers: answer[];
     selected_answer: string;
-
 };
 
 type Class = {
@@ -183,7 +182,7 @@ function onCreateClassBtnClick() {
         },
         class: {
             class_name: classNameInput.value,
-            class_id: null,
+            class_id: "",
             questions: [],
         },
     };
@@ -345,16 +344,72 @@ function instructorClassDisplayQuestions(Class: Class) {
     // insert the rendered template into the DOM
     classPageDiv.innerHTML = rendered;
 
-    // add create question listener
+    // add listeners
+}
 
-    // add answer event listeners
+/*********************************
+ * Instructor Class View updating
+ ********************************/
+function instructorClassAddQuestion(question: question) {
+    // using doT template create html
+    // insert into end of questions list
 }
 
 /*****************************
  * Instructor Class Listeners
  ****************************/
+function onCreateQuestionClick() {
+    // let nameInput: HTMLElement
+    let nameInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#instr_new_question_name");
+    if (nameInput.value === "") {
+        instrCreateQuestionFail("Error: question Requires name");
+        return;
+    }
 
-function instructorClassQuestionListeners() {
+    // setup request object
+    let reqJSON: question = {
+        question_title: nameInput.value,
+        question_id: "",
+        public: false,
+        class_id: info.currentClass,
+        answers: [],
+        selected_answer: "",
+    };
+
+
+    // make request
+    let req: XMLHttpRequest = new XMLHttpRequest();
+
+    // response listener
+    req.addEventListener("load", function () {
+        if (req.readyState === 4 && req.status === 200) {
+            // get add questions to class object
+            let res: question = JSON.parse(req.responseText);
+            console.log("create question req success", res);
+
+            // Class.questions.append(res);
+            instructorClassAddQuestion(res);
+            return;
+        }
+        instrCreateQuestionFail("Error: Failed to create question");
+    });
+
+    req.addEventListener("error", function () {
+        instrCreateQuestionFail("Error: Can't connect to server");
+    });
+
+    req.addEventListener("abort", function () {
+        instrCreateQuestionFail("Error: Can't connect to server");
+    });
+
+    req.open("POST", `/api/v0/instructors/classes/${info.currentClass}/questions`);
+    req.send(JSON.stringify(reqJSON));
+}
+
+/***********************************
+ * Instructor Class Listeners setup
+ **********************************/
+function instructorClassListeners() {
     let deleteQuestions = document.querySelectorAll("#instrQuestionDel_*");
     for (var i = 0; i < deleteQuestions.length; ++i) {
         // deleteQuestions[i].split("_")[1]
@@ -376,6 +431,9 @@ function instructorClassQuestionListeners() {
     }
 
     instructorClassAnswerListeners();
+
+    let createQuestion: HTMLElement = <HTMLElement>document.querySelector("#instr_new_question_btn");
+    createQuestion.addEventListener("click", onCreateQuestionClick);
 }
 
 function instructorClassAnswerListeners() {
@@ -400,8 +458,11 @@ function displayInstructorSelection() {
 /*************************************
  * instructor failed request handlers
  ************************************/
-
 function displayInstructorClassFail(error: string) {
+    // body...
+}
+
+function instrCreateQuestionFail(error: string) {
     // body...
 }
 
