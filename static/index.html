@@ -60,7 +60,7 @@
 <div id="instructor_page" class="hidden">
 <!-- page doT templates -->
     <script id="instructor_class_page_template" type="x-dot-template">
-        <h3 class="page_subheader">Class: {{=it.name}} ({{=it.class_id}})</h3>
+        <h3 class="page_subheader">Class: {{=it.class_name}} ({{=it.class_id}})</h3>
         <div class="question_list" id="instructor_question_list">
             <ul>
             {{~it.questions :value}}
@@ -70,25 +70,31 @@
                         {{~value.answers :answer}}
                         <li>
                             <div>{{=answer.answer_text}}</div>
-                            <button class="answer_delete_btn">delete answer</button>
+                            <button class="answer_delete_btn" id="ansDel_{{=answer.answer_id}}">delete answer</button>
                         </li>
                         {{~}}
                     </ul>
                 </li>
-                <button class="question_delete_btn">delete question</button>
-                <button class="question_add_answer_btn">add answer</button>
+                <button id="instrQuestionDel_{{=question.question_id}}">delete question</button>
+                <button id="instrQuestionAdd_{{=question.question_id}}">add answer</button>
                 {{?value.public === undefined || value.public === false}}
-                    <button class="question_make_public_btn">make public</button>
+                    <button class="instrQuestionPub_{{=question.question_id}}">make public</button>
                 {{?}}
-                <button class="question_view_results_btn">view results</button>
+                <button id="instrQuestionRes_{{=question.question_id}}">view results</button>
             {{~}}
             </ul>
+            <div id="instr_new_question">
+                Question Name:
+                <br>
+                <input type="text" id="instr_new_question_name">
+                <button id="instr_new_question_btn">create new question</button>
+            </div>
         </div>
     </script>
 <!-- page contents -->
     <div class="page_header">
         <h2>Instructor</h2>
-        <h3>Hello: name</h3>
+        <h3 id="instructor_display_name">Hello: name</h3>
     </div>
     <div id="instructor_class_selection_page" class="hidden">
         <h3 class="page_subheader">Class list</h3>
