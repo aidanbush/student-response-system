@@ -351,6 +351,7 @@ function instructorClassDisplayQuestions(Class: Class) {
 /*********************************
  * Instructor Class View updating
  ********************************/
+// clean up
 function instructorClassAddQuestion(question: question) {
     let questionList: HTMLElement = <HTMLElement>document.querySelector("#instr_question_list");
 
@@ -364,7 +365,8 @@ function instructorClassAddQuestion(question: question) {
     // insert the rendered template into the DOM
 
     // insert into end of questions list
-    questionList.appendChild(rendered);
+    console.log(rendered);
+    questionList.innerHTML += rendered;
 }
 
 /*****************************
@@ -424,34 +426,36 @@ function onCreateQuestionClick() {
  * Instructor Class Listeners setup
  **********************************/
 function instructorClassListeners() {
-    let deleteQuestions = document.querySelectorAll("#instrQuestionDel_*");
+    let deleteQuestions = document.querySelectorAll("[id^='instrQuestionDel_']");
     for (var i = 0; i < deleteQuestions.length; ++i) {
         // deleteQuestions[i].split("_")[1]
     }
 
-    let addAnswers = document.querySelectorAll("#instrQuestionAdd_*");
+    let addAnswers = document.querySelectorAll("[id^='instrQuestionAdd_']");
     for (var i = 0; i < addAnswers.length; ++i) {
         // addAnswers[i].split("_")[1]
     }
 
-    let questionsPublic = document.querySelectorAll("#instrQuestionPub_*");
+    let questionsPublic = document.querySelectorAll("[id^='instrQuestionPub_']");
     for (var i = 0; i < questionsPublic.length; ++i) {
         // questionsPublic[i].split("_")[1]
     }
 
-    let questionsResults = document.querySelectorAll("#instrQuestionRes_*");
+    let questionsResults = document.querySelectorAll("[id^='instrQuestionRes_']");
     for (var i = 0; i < questionsResults.length; ++i) {
         // questionsResults[i].split("_")[1]
     }
 
     instructorClassAnswerListeners();
 
+    console.log("add create question listener");
+
     let createQuestion: HTMLElement = <HTMLElement>document.querySelector("#instr_new_question_btn");
     createQuestion.addEventListener("click", onCreateQuestionClick);
 }
 
 function instructorClassAnswerListeners() {
-    let deleteAnswers = document.querySelectorAll("#ansDel_*");
+    let deleteAnswers = document.querySelectorAll("[id^='ansDel_']");
     // for each deleteAnswers
     for (var i = 0; i < deleteAnswers.length; ++i) {
         // deleteAnswers[i].split("_")[1]
