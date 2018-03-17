@@ -89,7 +89,7 @@
                 <button id="instrQuestionDel_{{=value.question_id}}">delete question</button>
                 <button id="instrQuestionAdd_{{=value.question_id}}">add answer</button>
                 {{?value.public === undefined || value.public === false}}
-                    <button class="instrQuestionPub_{{=value.question_id}}">make public</button>
+                    <button id="instrQuestionPub_{{=value.question_id}}">make public</button>
                 {{?}}
                 <button id="instrQuestionRes_{{=value.question_id}}">view results</button>
             {{~}}
