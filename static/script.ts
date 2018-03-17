@@ -31,7 +31,7 @@ type globals = {
     name: string;
     teachIDs: string[];
     takeIDs: string[];
-    classList: Class[];
+    classList: Map<string, Class>;
     currentClass: string;
 };
 
@@ -39,7 +39,7 @@ var info: globals = {
     name: null,
     teachIDs: [],
     takeIDs: [],
-    classList: [],
+    classList: new Map<string, Class>(),
     currentClass: null,
 };
 
@@ -196,9 +196,9 @@ function onCreateClassBtnClick() {
             let res: createRequest = JSON.parse(req.responseText);
             console.log("create class req success", res);
             // TODO: implement switching pages
-            info.classList.push(res.class);
+            info.classList.set(res.class.class_id, res.class);
             info.currentClass = res.class.class_id;
-            switchInstructorClassView(res.class);
+            switchInstructorClassView();
             return;
         }
         createClassReqFail("Error: Failed to create class");
@@ -237,12 +237,12 @@ function createClassReqFail(error: string) {
 /******************************
  * login switch view functions
  *****************************/
-function switchInstructorClassView(Class: Class) {
+function switchInstructorClassView() {
     // hide login page
     hideLoginPage();
 
     // call display view
-    displayInstructorClassPage(Class);
+    displayInstructorClassPage();
 }
 
 function switchStudentClassView() {
@@ -294,7 +294,7 @@ function displayInstructorPage() {
 /************************
  * Instructor Class View
  ***********************/
-function displayInstructorClassPage(Class: Class) {
+function displayInstructorClassPage() {
     // request questions
     let req: XMLHttpRequest = new XMLHttpRequest();
 
@@ -304,9 +304,8 @@ function displayInstructorClassPage(Class: Class) {
             // get add questions to class object
             let res: question[] = JSON.parse(req.responseText);
             console.log("get questions req success", res);
-
-            Class.questions = res;
-            instructorClassDisplayQuestions(Class);
+            info.classList.get(info.currentClass).questions = res;
+            instructorClassDisplayQuestions();
             return;
         }
         displayInstructorClassFail("Error: Failed to create class");
@@ -320,7 +319,7 @@ function displayInstructorClassPage(Class: Class) {
         displayInstructorClassFail("Error: Can't connect to server");
     });
 
-    req.open("GET", `/api/v0/instructors/classes/${Class.class_id}/questions`);
+    req.open("GET", `/api/v0/instructors/classes/${info.currentClass}/questions`);
     req.send();
 
     // display instructor page
@@ -331,7 +330,7 @@ function displayInstructorClassPage(Class: Class) {
     classDiv.classList.remove("hidden");
 }
 
-function instructorClassDisplayQuestions(Class: Class) {
+function instructorClassDisplayQuestions() {
     let classPageDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_page");
 
     // obtain the template
@@ -340,7 +339,7 @@ function instructorClassDisplayQuestions(Class: Class) {
     // compile the template
     let func = doT.template(template.innerHTML);
     // render the data into the template
-    let rendered = func(Class);
+    let rendered = func(info.classList.get(info.currentClass));
     // insert the rendered template into the DOM
     classPageDiv.innerHTML = rendered;
 
@@ -366,7 +365,8 @@ function instructorClassAddQuestion(question: question) {
 
     // insert into end of questions list
     console.log(rendered);
-    questionList.innerHTML += rendered;
+    // does not preserve listeners
+    instructorClassDisplayQuestions();
 }
 
 /*****************************
@@ -402,7 +402,8 @@ function onCreateQuestionClick() {
             console.log("create question req success", res);
 
             // insert question to array
-            info.classList.filter(x => x.class_id = info.currentClass)[0].questions.push(res);
+            // assume not empty
+            info.classList.get(info.currentClass).questions.push(res);
 
             instructorClassAddQuestion(res);
             return;
@@ -422,29 +423,35 @@ function onCreateQuestionClick() {
     req.send(JSON.stringify(reqJSON));
 }
 
+/********************************
+ * Instructor Question Listeners
+ *******************************/
+function onDeleteQuestionClick(event: Event) {
+    // send delete request
+    console.log("delete question: ", event.target.id.split("_")[1]);
+}
+
+function onAddAnswerClick(event: Event) {
+    // show question prompt
+    console.log("add answer, question: ", event.target.id.split("_")[1]);
+}
+
+function onPublicQuestionClick(event: Event) {
+    // make public request
+    console.log("make public question: ", event.target.id.split("_")[1]);
+}
+
+function onQuestionResultsClick(event: Event) {
+    // request results
+        // draw results on response
+    console.log("results question: ", event.target.id.split("_")[1]);
+}
+
 /***********************************
  * Instructor Class Listeners setup
  **********************************/
 function instructorClassListeners() {
-    let deleteQuestions = document.querySelectorAll("[id^='instrQuestionDel_']");
-    for (var i = 0; i < deleteQuestions.length; ++i) {
-        // deleteQuestions[i].split("_")[1]
-    }
-
-    let addAnswers = document.querySelectorAll("[id^='instrQuestionAdd_']");
-    for (var i = 0; i < addAnswers.length; ++i) {
-        // addAnswers[i].split("_")[1]
-    }
-
-    let questionsPublic = document.querySelectorAll("[id^='instrQuestionPub_']");
-    for (var i = 0; i < questionsPublic.length; ++i) {
-        // questionsPublic[i].split("_")[1]
-    }
-
-    let questionsResults = document.querySelectorAll("[id^='instrQuestionRes_']");
-    for (var i = 0; i < questionsResults.length; ++i) {
-        // questionsResults[i].split("_")[1]
-    }
+    instructorQuestionListeners();
 
     instructorClassAnswerListeners();
 
@@ -452,6 +459,28 @@ function instructorClassListeners() {
 
     let createQuestion: HTMLElement = <HTMLElement>document.querySelector("#instr_new_question_btn");
     createQuestion.addEventListener("click", onCreateQuestionClick);
+}
+
+function instructorQuestionListeners() {
+    let deleteQuestions = document.querySelectorAll("[id^='instrQuestionDel_']");
+    for (var i = 0; i < deleteQuestions.length; ++i) {
+        deleteQuestions[i].addEventListener("click", onDeleteQuestionClick);
+    }
+
+    let addAnswers = document.querySelectorAll("[id^='instrQuestionAdd_']");
+    for (var i = 0; i < addAnswers.length; ++i) {
+        addAnswers[i].addEventListener("click", onAddAnswerClick);
+    }
+
+    let questionsPublic = document.querySelectorAll("[id^='instrQuestionPub_']");
+    for (var i = 0; i < questionsPublic.length; ++i) {
+        questionsPublic[i].addEventListener("click", onPublicQuestionClick);
+    }
+
+    let questionsResults = document.querySelectorAll("[id^='instrQuestionRes_']");
+    for (var i = 0; i < questionsResults.length; ++i) {
+        questionsResults[i].addEventListener("click", onQuestionResultsClick);
+    }
 }
 
 function instructorClassAnswerListeners() {
