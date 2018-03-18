@@ -69,7 +69,7 @@ function onLoginJoinClick() {
         return;
     }
     // obtain the template
-    let template = document.querySelector("#new_join_template");
+    let template: HTMLElement = <HTMLElement>document.querySelector("#new_join_template");
 
     // compile the template
     let func = doT.template(template.innerHTML);
@@ -79,8 +79,8 @@ function onLoginJoinClick() {
     joinDiv.innerHTML = rendered;
 
     // create listener
-    let joinBtn = document.querySelector("#join_class_btn");
-    joinBtn.addEventListener("click", onJoinClassBtnClick);
+    let joinBtn: HTMLButtonElement = <HTMLButtonElement>document.querySelector("#join_class_btn");
+    joinBtn.onclick = onJoinClassBtnClick;
     console.log("add join btn listener");
 }
 
@@ -93,7 +93,7 @@ function onLoginCreateClick() {
         return;
     }
     // obtain the template
-    let template = document.querySelector("#new_create_template");
+    let template: HTMLElement = <HTMLElement>document.querySelector("#new_create_template");
 
     // compile the template
     let func = doT.template(template.innerHTML);
@@ -103,8 +103,8 @@ function onLoginCreateClick() {
     createDiv.innerHTML = rendered;
 
     // create listener
-    let createBtn = document.querySelector("#new_class_btn");
-    createBtn.addEventListener("click", onCreateClassBtnClick);
+    let createBtn: HTMLButtonElement = <HTMLButtonElement>document.querySelector("#new_class_btn");
+    createBtn.onclick = onCreateClassBtnClick;
     console.log("add create btn listener");
 }
 
@@ -142,7 +142,7 @@ function onJoinClassBtnClick() {
     let req: XMLHttpRequest = new XMLHttpRequest();
 
     // response listener
-    req.addEventListener("load", function () {
+    req.onload = function () {
         if (req.readyState === 4 && req.status === 200) {
             let res: XMLHttpRequestResponseType = JSON.parse(req.responseText);
             console.log("join class req success", res);
@@ -151,7 +151,15 @@ function onJoinClassBtnClick() {
             return;
         }
         joinClassReqFail("Failed to join class");
-    });
+    };
+
+    req.onerror = function () {
+        joinClassReqFail("Error: Can't connect to server");
+    };
+
+    req.onabort = function () {
+        joinClassReqFail("Error: Can't connect to server");
+    };
 
     req.open("POST", `/api/v0/classes/${encodeURI(classID)}`);
     req.send(JSON.stringify(reqJSON));
@@ -191,26 +199,27 @@ function onCreateClassBtnClick() {
     let req: XMLHttpRequest = new XMLHttpRequest();
 
     // response listener
-    req.addEventListener("load", function () {
+    req.onload = function () {
         if (req.readyState === 4 && req.status === 200) {
             let res: createRequest = JSON.parse(req.responseText);
-            console.log("create class req success", res);
-            // TODO: implement switching pages
+
+            // add to list of classes
             info.classList.set(res.class.class_id, res.class);
             info.currentClass = res.class.class_id;
+
             switchInstructorClassView();
             return;
         }
         createClassReqFail("Error: Failed to create class");
-    });
+    };
 
-    req.addEventListener("error", function () {
+    req.onerror = function () {
         createClassReqFail("Error: Can't connect to server");
-    });
+    };
 
-    req.addEventListener("abort", function () {
+    req.onabort = function () {
         createClassReqFail("Error: Can't connect to server");
-    });
+    };
 
     req.open("POST", `/api/v0/classes`);
     req.send(JSON.stringify(reqJSON));
@@ -299,7 +308,7 @@ function displayInstructorClassPage() {
     let req: XMLHttpRequest = new XMLHttpRequest();
 
     // response listener
-    req.addEventListener("load", function () {
+    req.onload = function () {
         if (req.readyState === 4 && req.status === 200) {
             // get add questions to class object
             let res: question[] = JSON.parse(req.responseText);
@@ -310,15 +319,15 @@ function displayInstructorClassPage() {
             return;
         }
         displayInstructorClassFail("Error: Failed to create class");
-    });
+    };
 
-    req.addEventListener("error", function () {
+    req.onerror = function () {
         displayInstructorClassFail("Error: Can't connect to server");
-    });
+    };
 
-    req.addEventListener("abort", function () {
+    req.onabort = function () {
         displayInstructorClassFail("Error: Can't connect to server");
-    });
+    };
 
     req.open("GET", `/api/v0/instructors/classes/${info.currentClass}/questions`);
     req.send();
@@ -388,27 +397,27 @@ function onCreateQuestionClick() {
     let req: XMLHttpRequest = new XMLHttpRequest();
 
     // response listener
-    req.addEventListener("load", function () {
+    req.onload = function () {
         if (req.readyState === 4 && req.status === 200) {
             // get add questions to class object
             let res: question = JSON.parse(req.responseText);
 
             // insert question to array
-            info.classList.get(info.currentClass).questions.push(res);
+            (<Class>info.classList.get(info.currentClass)).questions.push(res);
 
             instructorViewAddQuestion(res);
             return;
         }
         instrCreateQuestionFail("Error: Failed to create question");
-    });
+    };
 
-    req.addEventListener("error", function () {
+    req.onerror = function () {
         instrCreateQuestionFail("Error: Can't connect to server");
-    });
+    };
 
-    req.addEventListener("abort", function () {
+    req.onabort = function () {
         instrCreateQuestionFail("Error: Can't connect to server");
-    });
+    };
 
     req.open("POST", `/api/v0/instructors/classes/${info.currentClass}/questions`);
     req.send(JSON.stringify(reqJSON));
@@ -449,7 +458,7 @@ function onAddAnswerClick(event: Event) {
             console.log("create question req success", res);
 
             // insert answer into error
-            (<question>info.classList.get(info.currentClass).questions.find(question => question.question_id == qid)).answers.push(res);
+            (<question>(<Class>info.classList.get(info.currentClass)).questions.find(question => question.question_id === qid)).answers.push(res);
             // assume not empty
             instructorViewAddAnswer(res);
             return;
@@ -480,6 +489,11 @@ function onQuestionResultsClick(event: Event) {
     console.log("results question: ", (<HTMLElement>event.target).id.split("_")[1]);
 }
 
+function onDeleteAnswerClick(event: Event) {
+    // delete answer
+    console.log("delete answer: ", (<HTMLElement>event.target).id.split("_")[1]);
+}
+
 /***********************************
  * Instructor Class Listeners setup
  **********************************/
@@ -491,36 +505,35 @@ function instructorClassListeners() {
     console.log("add create question listener");
 
     let createQuestion: HTMLElement = <HTMLElement>document.querySelector("#instr_new_question_btn");
-    createQuestion.addEventListener("click", onCreateQuestionClick);
+    createQuestion.onclick = onCreateQuestionClick;
 }
 
 function instructorQuestionListeners() {
-    let deleteQuestions = document.querySelectorAll("[id^='instrQuestionDel_']");
+    let deleteQuestions = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrQuestionDel_']");
     for (var i = 0; i < deleteQuestions.length; ++i) {
-        deleteQuestions[i].addEventListener("click", onDeleteQuestionClick);
+        deleteQuestions[i].onclick = onDeleteQuestionClick;
     }
 
-    let addAnswers = document.querySelectorAll("[id^='instrQuestionAdd_']");
+    let addAnswers = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrQuestionAdd_']");
     for (var i = 0; i < addAnswers.length; ++i) {
-        addAnswers[i].addEventListener("click", onAddAnswerClick);
+        addAnswers[i].onclick = onAddAnswerClick;
     }
 
-    let questionsPublic = document.querySelectorAll("[id^='instrQuestionPub_']");
+    let questionsPublic = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrQuestionPub_']");
     for (var i = 0; i < questionsPublic.length; ++i) {
-        questionsPublic[i].addEventListener("click", onPublicQuestionClick);
+        questionsPublic[i].onclick = onPublicQuestionClick;
     }
 
-    let questionsResults = document.querySelectorAll("[id^='instrQuestionRes_']");
+    let questionsResults = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrQuestionRes_']");
     for (var i = 0; i < questionsResults.length; ++i) {
-        questionsResults[i].addEventListener("click", onQuestionResultsClick);
+        questionsResults[i].onclick = onQuestionResultsClick;
     }
 }
 
 function instructorClassAnswerListeners() {
-    let deleteAnswers = document.querySelectorAll("[id^='ansDel_']");
-    // for each deleteAnswers
+    let deleteAnswers = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='ansDel_']");
     for (var i = 0; i < deleteAnswers.length; ++i) {
-        // deleteAnswers[i].split("_")[1]
+        deleteAnswers[i].onclick = onDeleteAnswerClick;
     }
 }
 
