@@ -59,17 +59,6 @@
 <!-- Instructor pages -->
 <div id="instructor_page" class="hidden">
 <!-- page doT templates -->
-    <script id="instr_question_template" type="x-dot-template">
-        <li>
-            <div>{{=it.question_title}}</div>
-            <button id="instrQuestionDel_{{=it.question_id}}">delete question</button>
-            <button id="instrQuestionAdd_{{=it.question_id}}">add answer</button>
-            {{?it.public === undefined || it.public === false}}
-                <button class="instrQuestionPub_{{=it.question_id}}">make public</button>
-            {{?}}
-            <button id="instrQuestionRes_{{=it.question_id}}">view results</button>
-        </li>
-    </script>
     <script id="instructor_class_page_template" type="x-dot-template">
         <h3 class="page_subheader">Class: {{=it.class_name}} ({{=it.class_id}})</h3>
         <div class="question_list">
@@ -86,12 +75,15 @@
                         {{~}}
                     </ul>
                 </li>
-                <button id="instrQuestionDel_{{=value.question_id}}">delete question</button>
-                <button id="instrQuestionAdd_{{=value.question_id}}">add answer</button>
-                {{?value.public === undefined || value.public === false}}
-                    <button id="instrQuestionPub_{{=value.question_id}}">make public</button>
-                {{?}}
-                <button id="instrQuestionRes_{{=value.question_id}}">view results</button>
+                    Enter answer:
+                    <input type="text" name="test" id="instrQuestionAddText_{{=value.question_id}}">
+                    <br>
+                    <button id="instrQuestionAdd_{{=value.question_id}}">add answer</button>
+                    <button id="instrQuestionDel_{{=value.question_id}}">delete question</button>
+                    {{?value.public === undefined || value.public === false}}
+                        <button id="instrQuestionPub_{{=value.question_id}}">make public</button>
+                    {{?}}
+                    <button id="instrQuestionRes_{{=value.question_id}}">view results</button>
             {{~}}
             </ul>
             <div id="instr_new_question">
