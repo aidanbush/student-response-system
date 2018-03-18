@@ -39,8 +39,6 @@ func createNewAnswer(w http.ResponseWriter, r *http.Request) (answer, error) {
 		return answer, fmt.Errorf("createNewAnswer: unable to grab questionID")
 	}
 
-	answer.QuestionID = questionID
-
 	//grab cookie
 	cookie, err := r.Cookie("UAT")
 	if err != nil {
@@ -50,7 +48,7 @@ func createNewAnswer(w http.ResponseWriter, r *http.Request) (answer, error) {
 	}
 
 	// validate cookie
-	if valid, err := validOwnQuestion(answer.QuestionID, cookie.Value); err != nil {
+	if valid, err := validOwnQuestion(questionID, cookie.Value); err != nil {
 		fmt.Println("error in validating question")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return answer, err
@@ -69,6 +67,9 @@ func createNewAnswer(w http.ResponseWriter, r *http.Request) (answer, error) {
 		return answer, err
 	}
 
+	// set questionID
+	answer.QuestionID = questionID
+
 	//validate
 	if !validAnswerReq(answer) {
 		fmt.Println("answer: invalid request")
@@ -79,7 +80,7 @@ func createNewAnswer(w http.ResponseWriter, r *http.Request) (answer, error) {
 	// add answer
 	err = insertAnswerDB(&answer)
 	if err != nil {
-		fmt.Println("insertAnswerDB", err)
+		fmt.Println("insertAnswerDB: ", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return answer, err
 	}
