@@ -36,11 +36,11 @@ type globals = {
 };
 
 var info: globals = {
-    name: null,
+    name: "",
     teachIDs: [],
     takeIDs: [],
     classList: new Map<string, Class>(),
-    currentClass: null,
+    currentClass: "",
 };
 
 var username:string = "";
@@ -122,10 +122,10 @@ function onJoinClassBtnClick() {
     let classID = classIDInput.value;
 
     let nameInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#student_name");
-    if (nameInput.value === "" && info.name === null) {
+    if (nameInput.value === "" && info.name === "") {
         joinClassReqFail("Error: Requires your name");
         return;
-    } else if (info.name === null) {
+    } else if (info.name === "") {
         info.name = nameInput.value;
     }
 
@@ -168,10 +168,10 @@ function onCreateClassBtnClick() {
     }
 
     let nameInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#instructor_name");
-    if (nameInput.value === "" && info.name === null) {
+    if (nameInput.value === "" && info.name === "") {
         createClassReqFail("Error: Requires your name");
         return;
-    } else if (info.name === null) {
+    } else if (info.name === "") {
         info.name = nameInput.value;
     }
 
@@ -303,7 +303,8 @@ function displayInstructorClassPage() {
         if (req.readyState === 4 && req.status === 200) {
             // get add questions to class object
             let res: question[] = JSON.parse(req.responseText);
-            console.log("get questions req success", res);
+
+            // set questions
             info.classList.get(info.currentClass).questions = res;
             instructorClassDisplayQuestions();
             return;
@@ -351,21 +352,13 @@ function instructorClassDisplayQuestions() {
  * Instructor Class View updating
  ********************************/
 // clean up
-function instructorClassAddQuestion(question: question) {
-    let questionList: HTMLElement = <HTMLElement>document.querySelector("#instr_question_list");
+function instructorViewAddQuestion(question: question) {
+    /* redraw view */
+    instructorClassDisplayQuestions();
+}
 
-    // obtain the template
-    let template: HTMLElement = <HTMLElement>document.querySelector("#instr_question_template");
-
-    // compile the template
-    let func = doT.template(template.innerHTML);
-    // render the data into the template
-    let rendered = func(question);
-    // insert the rendered template into the DOM
-
-    // insert into end of questions list
-    console.log(rendered);
-    // does not preserve listeners
+function instructorViewAddAnswer(answer: answer) {
+    /* redraw view */
     instructorClassDisplayQuestions();
 }
 
@@ -399,13 +392,11 @@ function onCreateQuestionClick() {
         if (req.readyState === 4 && req.status === 200) {
             // get add questions to class object
             let res: question = JSON.parse(req.responseText);
-            console.log("create question req success", res);
 
             // insert question to array
-            // assume not empty
             info.classList.get(info.currentClass).questions.push(res);
 
-            instructorClassAddQuestion(res);
+            instructorViewAddQuestion(res);
             return;
         }
         instrCreateQuestionFail("Error: Failed to create question");
@@ -428,23 +419,65 @@ function onCreateQuestionClick() {
  *******************************/
 function onDeleteQuestionClick(event: Event) {
     // send delete request
-    console.log("delete question: ", event.target.id.split("_")[1]);
+    console.log("delete question: ", (<HTMLElement>event.target).id.split("_")[1]);
 }
 
 function onAddAnswerClick(event: Event) {
-    // show question prompt
-    console.log("add answer, question: ", event.target.id.split("_")[1]);
+    let qid: string = (<HTMLElement>event.target).id.split("_")[1];
+
+    // grab question text
+    let answerText: string = (<HTMLInputElement>document.querySelector(`#instrQuestionAddText_${qid}`)).value;
+    if (answerText === "") {
+        instrAddAnswerFail(qid, "Error: Enter a number");
+        return;
+    }
+
+    // setup request object
+    let reqJSON: answer = {
+        answer_id: "",
+        answer_text: answerText,
+        question_id: "",
+    };
+
+    // make request
+    let req: XMLHttpRequest = new XMLHttpRequest();
+
+    // response listener
+    req.onload = function () {
+        if (req.readyState === 4 && req.status === 200) {
+            let res: answer = JSON.parse(req.responseText);
+            console.log("create question req success", res);
+
+            // insert answer into error
+            (<question>info.classList.get(info.currentClass).questions.find(question => question.question_id == qid)).answers.push(res);
+            // assume not empty
+            instructorViewAddAnswer(res);
+            return;
+        }
+        instrAddAnswerFail(qid, "Error: Can't connect to server");
+    };
+
+    req.onerror = function () {
+        instrAddAnswerFail(qid, "Error: Can't connect to server");
+    };
+
+    req.onabort = function () {
+        instrAddAnswerFail(qid, "Error: Can't connect to server");
+    };
+
+    req.open("POST", `/api/v0/instructors/classes/${info.currentClass}/questions/${qid}`);
+    req.send(JSON.stringify(reqJSON));
 }
 
 function onPublicQuestionClick(event: Event) {
     // make public request
-    console.log("make public question: ", event.target.id.split("_")[1]);
+    console.log("make public question: ", (<HTMLElement>event.target).id.split("_")[1]);
 }
 
 function onQuestionResultsClick(event: Event) {
     // request results
         // draw results on response
-    console.log("results question: ", event.target.id.split("_")[1]);
+    console.log("results question: ", (<HTMLElement>event.target).id.split("_")[1]);
 }
 
 /***********************************
@@ -506,11 +539,15 @@ function displayInstructorSelection() {
  * instructor failed request handlers
  ************************************/
 function displayInstructorClassFail(error: string) {
-    // body...
+    console.log("Class error: ", error);
 }
 
 function instrCreateQuestionFail(error: string) {
-    // body...
+    console.log("create question error: ", error);
+}
+
+function instrAddAnswerFail(qid: string, error: string) {
+    console.log("add answer error: ", error);
 }
 
 /*****************
