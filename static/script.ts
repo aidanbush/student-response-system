@@ -366,6 +366,11 @@ function instructorViewAddQuestion(question: question) {
     instructorClassDisplayQuestions();
 }
 
+function instructorViewUpdateQuestion(question: question) {
+    /* redraw view */
+    instructorClassDisplayQuestions();
+}
+
 function instructorViewAddAnswer(answer: answer) {
     /* redraw view */
     instructorClassDisplayQuestions();
@@ -479,14 +484,47 @@ function onAddAnswerClick(event: Event) {
 }
 
 function onPublicQuestionClick(event: Event) {
+    let qid: string = (<HTMLElement>event.target).id.split("_")[1]
     // make public request
-    console.log("make public question: ", (<HTMLElement>event.target).id.split("_")[1]);
+    console.log("make public question: ", qid);
+
+    // setup request object
+    let reqJSON: question = <question>(<Class>info.classList.get(info.currentClass)).questions.find(question => question.question_id === qid);
+    reqJSON.public = true;
+
+    // make request
+    let req: XMLHttpRequest = new XMLHttpRequest();
+
+    // response listener
+    req.onload = function () {
+        if (req.readyState === 4 && req.status === 200) {
+            // update question
+            let question: question = <question>(<Class>info.classList.get(info.currentClass)).questions.find(question => question.question_id === qid);
+            question.public = true;
+
+            instructorViewUpdateQuestion(question);
+            return;
+        }
+        instrAddAnswerFail(qid, "Error: Can't connect to server");
+    };
+
+    req.onerror = function () {
+        instrAddAnswerFail(qid, "Error: Can't connect to server");
+    };
+
+    req.onabort = function () {
+        instrAddAnswerFail(qid, "Error: Can't connect to server");
+    };
+
+    req.open("PUT", `/api/v0/instructors/classes/${info.currentClass}/questions/${qid}`);
+    req.send(JSON.stringify(reqJSON));
 }
 
 function onQuestionResultsClick(event: Event) {
+    let qid: string = (<HTMLElement>event.target).id.split("_")[1];
     // request results
         // draw results on response
-    console.log("results question: ", (<HTMLElement>event.target).id.split("_")[1]);
+    console.log("results question: ", qid);
 }
 
 function onDeleteAnswerClick(event: Event) {
