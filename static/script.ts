@@ -288,6 +288,16 @@ function setupLoginListeners() {
     createHeading.addEventListener("click", onLoginCreateClick);
 }
 
+/******************
+ * Instructor Page
+ *****************/
+
+type response = {
+    answer_id: string;
+    count: number;
+}
+
+
 /*******************
  * Instructor Views
  ******************/
@@ -376,6 +386,15 @@ function instructorViewAddAnswer(answer: answer) {
     instructorClassDisplayQuestions();
 }
 
+function instructorViewQuestionResults(response: response) {
+    /* draw results */
+}
+
+function instructorViewDeleteQuestion(qid: string) {
+    /* redraw view */
+    instructorClassDisplayQuestions();
+}
+
 /*****************************
  * Instructor Class Listeners
  ****************************/
@@ -432,8 +451,34 @@ function onCreateQuestionClick() {
  * Instructor Question Listeners
  *******************************/
 function onDeleteQuestionClick(event: Event) {
+    let qid: string = (<HTMLElement>event.target).id.split("_")[1]
     // send delete request
-    console.log("delete question: ", (<HTMLElement>event.target).id.split("_")[1]);
+    console.log("delete question: ", qid);
+
+    let req: XMLHttpRequest = new XMLHttpRequest();
+
+    req.onload = function () {
+        if (req.readyState === 4 && req.status === 204) {
+            // delete local copy
+            let Class: Class = <Class>info.classList.get(info.currentClass);
+            Class.questions = Class.questions.filter(question => question.question_id !== qid);
+            // redraw
+            instructorViewDeleteQuestion(qid);
+            return;
+        }
+        instrDeleteQuestionFail(qid, "Error: Can't connect to server");
+    };
+
+    req.onerror = function () {
+        instrDeleteQuestionFail(qid, "Error: Can't connect to server");
+    };
+
+    req.onabort = function () {
+        instrDeleteQuestionFail(qid, "Error: Can't connect to server");
+    };
+
+    req.open("DELETE", `/api/v0/instructors/classes/${info.currentClass}/questions/${qid}`);
+    req.send();
 }
 
 function onAddAnswerClick(event: Event) {
@@ -505,6 +550,35 @@ function onPublicQuestionClick(event: Event) {
             instructorViewUpdateQuestion(question);
             return;
         }
+        instrPublicQuestionFail(qid, "Error: Can't connect to server");
+    };
+
+    req.onerror = function () {
+        instrPublicQuestionFail(qid, "Error: Can't connect to server");
+    };
+
+    req.onabort = function () {
+        instrPublicQuestionFail(qid, "Error: Can't connect to server");
+    };
+
+    req.open("PUT", `/api/v0/instructors/classes/${info.currentClass}/questions/${qid}`);
+    req.send(JSON.stringify(reqJSON));
+}
+
+function onQuestionResultsClick(event: Event) {
+    let qid: string = (<HTMLElement>event.target).id.split("_")[1];
+    console.log("results question: ", qid);
+
+    // make request
+    let req: XMLHttpRequest = new XMLHttpRequest();
+
+    // response listener
+    req.onload = function () {
+        if (req.readyState === 4 && req.status === 200) {
+            let res: response = JSON.parse(req.responseText);
+            // draw results
+            return;
+        }
         instrAddAnswerFail(qid, "Error: Can't connect to server");
     };
 
@@ -516,15 +590,8 @@ function onPublicQuestionClick(event: Event) {
         instrAddAnswerFail(qid, "Error: Can't connect to server");
     };
 
-    req.open("PUT", `/api/v0/instructors/classes/${info.currentClass}/questions/${qid}`);
-    req.send(JSON.stringify(reqJSON));
-}
-
-function onQuestionResultsClick(event: Event) {
-    let qid: string = (<HTMLElement>event.target).id.split("_")[1];
-    // request results
-        // draw results on response
-    console.log("results question: ", qid);
+    req.open("GET", `/api/v0/instructors/classes/${info.currentClass}/questions/${qid}`);
+    req.send();
 }
 
 function onDeleteAnswerClick(event: Event) {
@@ -599,6 +666,14 @@ function instrCreateQuestionFail(error: string) {
 
 function instrAddAnswerFail(qid: string, error: string) {
     console.log("add answer error: ", error);
+}
+
+function instrDeleteQuestionFail(qid: string, error: string) {
+    console.log("delete question error: ", error);
+}
+
+function instrPublicQuestionFail(qid: string, error: string) {
+    console.log("public question error: ", error);
 }
 
 /*****************

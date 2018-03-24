@@ -59,6 +59,20 @@
 <!-- Instructor pages -->
 <div id="instructor_page" class="hidden">
 <!-- page doT templates -->
+    <script id="instructor_page_answer_results" type="x-dot-template">
+        <table>
+            <tr>
+                <th>answer</th>
+                <th>count</th>
+            </tr>
+            {{~it :answer}}
+            <tr>
+                <td>{{=answer.answer_id}}</td>
+                <td>{{=answer.count}}</td>
+            </tr>
+            {{~}}
+        </table>
+    </script>
     <script id="instructor_class_page_template" type="x-dot-template">
         <h3 class="page_subheader">Class: {{=it.class_name}} ({{=it.class_id}})</h3>
         <div class="question_list">
