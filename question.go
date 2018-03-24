@@ -171,12 +171,27 @@ func deleteQuestion(w http.ResponseWriter, r *http.Request) error {
 }
 
 func deleteQuestionDB(questionID string) error {
-	q := `delete from answered where qid = $1; delete from answer where qid = $1; delete from question where qid = $1`
+	q := `delete from answered where qid = $1`
 
 	_, err := db.Exec(q, questionID)
 	if err != nil {
 		return err
 	}
+
+	q = `delete from answer where qid = $1`
+
+	_, err = db.Exec(q, questionID)
+	if err != nil {
+		return err
+	}
+
+	q = `delete from question where qid = $1`
+
+	_, err = db.Exec(q, questionID)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
