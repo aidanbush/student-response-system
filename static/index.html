@@ -125,9 +125,31 @@
 
 <!-- Student pages -->
 <div id="student_page" class="hidden">
+<!-- page doT templates -->
+    <script id="student_class_page_template" type="x-dot-template">
+        <h3 class="page_subheader">Class: {{=it.class_name}} ({{=it.class_id}})</h3>
+        <div class="question_list">
+            <ul id="student_question_list">
+            {{~it.questions :value}}
+                <li class="question">
+                    <div class="question_name">{{=value.question_title}}</div>
+                    <ul id="ansList_{{=value.question_id}}">
+                        {{~value.answers :answer}}
+                        <li>
+                            <div id="ansSel_{{=answer.answer_id}}">{{=answer.answer_text}}</div>
+                        </li>
+                        {{~}}
+                    </ul>
+                </li>
+            {{~}}
+            </ul>
+            <button id="student_refresh_questions">Refresh questions</button>
+        </div>
+    </script>
+<!-- page contents -->
     <div class="page_header">
         <h2>Student</h2>
-        <h3>Hello: name</h3>
+        <h3 id="student_display_name">Hello: name</h3>
     </div>
     <div id="student_class_selection_page" class="hidden">
         <h3 class="page_subheader">Class list</h3>

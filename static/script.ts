@@ -144,10 +144,13 @@ function onJoinClassBtnClick() {
     // response listener
     req.onload = function () {
         if (req.readyState === 4 && req.status === 200) {
-            let res: XMLHttpRequestResponseType = JSON.parse(req.responseText);
+            let res: createRequest = JSON.parse(req.responseText);
             console.log("join class req success", res);
-            // TODO: implement switching pages
-            // add class_id to list
+            // add to list of classes
+            info.classList.set(res.class.class_id, res.class);
+            info.currentClass = res.class.class_id;
+
+            switchStudentClassView();
             return;
         }
         joinClassReqFail("Failed to join class");
@@ -256,8 +259,10 @@ function switchInstructorClassView() {
 
 function switchStudentClassView() {
     // hide login page
+    hideLoginPage();
 
     // call display view
+    displayStudentClassPage();
 }
 
 /*******************
@@ -297,7 +302,6 @@ type response = {
     count: number;
 }
 
-
 /*******************
  * Instructor Views
  ******************/
@@ -324,7 +328,7 @@ function displayInstructorClassPage() {
             let res: question[] = JSON.parse(req.responseText);
 
             // set questions
-            info.classList.get(info.currentClass).questions = res;
+            (<Class>info.classList.get(info.currentClass)).questions = res;
             instructorClassDisplayQuestions();
             return;
         }
@@ -576,7 +580,7 @@ function onQuestionResultsClick(event: Event) {
     req.onload = function () {
         if (req.readyState === 4 && req.status === 200) {
             let res: response = JSON.parse(req.responseText);
-            // draw results
+            // TODO: draw results
             return;
         }
         instrAddAnswerFail(qid, "Error: Can't connect to server");
@@ -674,6 +678,94 @@ function instrDeleteQuestionFail(qid: string, error: string) {
 
 function instrPublicQuestionFail(qid: string, error: string) {
     console.log("public question error: ", error);
+}
+
+/***************
+ * Student Page
+ **************/
+
+/****************
+ * Student Views
+ ***************/
+function displayStudentPage() {
+    // TODO set name
+    let instructorNameDiv: HTMLElement = <HTMLElement>document.querySelector("#student_display_name");
+    instructorNameDiv.innerHTML = `Hello ${info.name}`;
+
+    // show page
+    let classDiv: HTMLElement = <HTMLElement>document.querySelector("#student_page");
+    classDiv.classList.remove("hidden");
+}
+
+/*********************
+ * Student Class View
+ ********************/
+function displayStudentClassPage() {
+    let req:XMLHttpRequest = new XMLHttpRequest();
+
+    req.onload = function () {
+        if (req.readyState === 4 && req.status === 200) {
+            // get add questions to class object
+            let res: question[] = JSON.parse(req.responseText);
+
+            // set questions
+            (<Class>info.classList.get(info.currentClass)).questions = res;
+            studentClassDisplayQuestions();
+            return;
+        }
+        displayStudentClassFail("Error: Can't connect to server");
+    };
+
+    req.onerror = function () {
+        displayStudentClassFail("Error: Can't connect to server");
+    };
+
+    req.onabort = function () {
+        displayStudentClassFail("Error: Can't connect to server");
+    };
+
+    req.open("GET", `/api/v0/classes/${encodeURI(info.currentClass)}/questions`);
+    req.send();
+
+    // display page
+    displayStudentPage();
+
+    // display class page
+    let classDiv: HTMLElement = <HTMLElement>document.querySelector("#student_class_page");
+    classDiv.classList.remove("hidden");
+}
+
+function studentClassDisplayQuestions() {
+    let classPageDiv: HTMLElement = <HTMLElement>document.querySelector("#student_class_page");
+
+    // obtain the template
+    let template: HTMLElement = <HTMLElement>document.querySelector("#student_class_page_template");
+
+    // compile the template
+    let func = doT.template(template.innerHTML);
+    // render the data into the template
+    let rendered = func(info.classList.get(info.currentClass));
+    // insert the rendered template into the DOM
+    classPageDiv.innerHTML = rendered;
+
+    // add listeners
+    studentClassListeners();
+}
+
+/********************************
+ * Student Class Listeners setup
+ *******************************/
+function studentClassListeners() {
+    // refresh listener
+    let refreshDiv: HTMLElement = <HTMLElement>document.querySelector("#student_refresh_questions");
+    //refreshDiv.onclick();
+}
+
+/**********************************
+ * student failed request handlers
+ *********************************/
+function displayStudentClassFail(error: string) {
+    console.log("Class error: ", error);
 }
 
 /*****************
