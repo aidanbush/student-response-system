@@ -368,8 +368,9 @@ func updateAnswerDB(answerID, questionID, UAT string) error {
 }
 
 func ownPublicQuestion(UAT, classID, questionID string) (bool, error) {
-	q := `select count(*) from taking as T, question as Q
-        where T.pid = $1 and T.cid = $2 and Q.qid = $3 and T.cid = Q.cid and Q.public = true`
+	q := `select * from taking as T, question as Q
+        where T.pid = $1 and T.cid = $2 and Q.qid = $3 and T.cid = Q.cid and Q.public = true
+        limit 1`
 
 	res, err := db.Exec(q, UAT, classID, questionID)
 	if err != nil {
@@ -384,7 +385,7 @@ func ownPublicQuestion(UAT, classID, questionID string) (bool, error) {
 }
 
 func validAnswer(answerID, questionID string) (bool, error) {
-	q := `select count(*) from answer where aid = $1 and qid = $2`
+	q := `select * from answer where aid = $1 and qid = $2 limit 1`
 
 	res, err := db.Exec(q, answerID, questionID)
 	if err != nil {
