@@ -62,50 +62,22 @@ type joinRequest = {
  *************************/
 function onLoginJoinClick() {
     let joinDiv: HTMLElement = <HTMLElement>document.querySelector("#join");
-
-    // check if something is already there
-    if (joinDiv.innerHTML !== "") {
-        joinDiv.innerHTML = "";
-        return;
+    if (joinDiv.classList.contains("hidden")) {
+        joinDiv.classList.remove("hidden");
+    } else {
+        joinDiv.classList.add("hidden");
     }
-    // obtain the template
-    let template: HTMLElement = <HTMLElement>document.querySelector("#new_join_template");
-
-    // compile the template
-    let func = doT.template(template.innerHTML);
-    // render the data into the template
-    let rendered = func();
-    // insert the rendered template into the DOM
-    joinDiv.innerHTML = rendered;
-
-    // create listener
-    let joinBtn: HTMLButtonElement = <HTMLButtonElement>document.querySelector("#join_class_btn");
-    joinBtn.onclick = onJoinClassBtnClick;
-    console.log("add join btn listener");
+    return;
 }
 
 function onLoginCreateClick() {
     let createDiv: HTMLElement = <HTMLElement>document.querySelector("#create");
-
-    // check if something is already there
-    if (createDiv.innerHTML !== "") {
-        createDiv.innerHTML = "";
-        return;
+    if (createDiv.classList.contains("hidden")) {
+        createDiv.classList.remove("hidden");
+    } else {
+        createDiv.classList.add("hidden");
     }
-    // obtain the template
-    let template: HTMLElement = <HTMLElement>document.querySelector("#new_create_template");
-
-    // compile the template
-    let func = doT.template(template.innerHTML);
-    // render the data into the template
-    let rendered = func();
-    // insert the rendered template into the DOM
-    createDiv.innerHTML = rendered;
-
-    // create listener
-    let createBtn: HTMLButtonElement = <HTMLButtonElement>document.querySelector("#new_class_btn");
-    createBtn.onclick = onCreateClassBtnClick;
-    console.log("add create btn listener");
+    return;
 }
 
 /**********************
@@ -291,6 +263,14 @@ function setupLoginListeners() {
 
     let createHeading: HTMLElement = <HTMLElement>document.querySelector("#create_heading");
     createHeading.addEventListener("click", onLoginCreateClick);
+
+    let joinBtn: HTMLButtonElement = <HTMLButtonElement>document.querySelector("#join_class_btn");
+    joinBtn.onclick = onJoinClassBtnClick;
+    console.log("add join btn listener");
+
+    let createBtn: HTMLButtonElement = <HTMLButtonElement>document.querySelector("#new_class_btn");
+    createBtn.onclick = onCreateClassBtnClick;
+    console.log("add create btn listener");
 }
 
 /******************
