@@ -343,7 +343,7 @@ function displayInstructorClassPage() {
         displayInstructorClassFail("Error: Can't connect to server");
     };
 
-    req.open("GET", `/api/v0/instructors/classes/${info.currentClass}/questions`);
+    req.open("GET", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions`);
     req.send();
 
     // display instructor page
@@ -447,7 +447,7 @@ function onCreateQuestionClick() {
         instrCreateQuestionFail("Error: Can't connect to server");
     };
 
-    req.open("POST", `/api/v0/instructors/classes/${info.currentClass}/questions`);
+    req.open("POST", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions`);
     req.send(JSON.stringify(reqJSON));
 }
 
@@ -481,7 +481,7 @@ function onDeleteQuestionClick(event: Event) {
         instrDeleteQuestionFail(qid, "Error: Can't connect to server");
     };
 
-    req.open("DELETE", `/api/v0/instructors/classes/${info.currentClass}/questions/${qid}`);
+    req.open("DELETE", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}`);
     req.send();
 }
 
@@ -489,7 +489,7 @@ function onAddAnswerClick(event: Event) {
     let qid: string = (<HTMLElement>event.target).id.split("_")[1];
 
     // grab question text
-    let answerText: string = (<HTMLInputElement>document.querySelector(`#instrQuestionAddText_${qid}`)).value;
+    let answerText: string = (<HTMLInputElement>document.querySelector(`#instrQuestionAddText_${encodeURI(qid)}`)).value;
     if (answerText === "") {
         instrAddAnswerFail(qid, "Error: Enter a number");
         return;
@@ -528,7 +528,7 @@ function onAddAnswerClick(event: Event) {
         instrAddAnswerFail(qid, "Error: Can't connect to server");
     };
 
-    req.open("POST", `/api/v0/instructors/classes/${info.currentClass}/questions/${qid}`);
+    req.open("POST", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}`);
     req.send(JSON.stringify(reqJSON));
 }
 
@@ -565,7 +565,7 @@ function onPublicQuestionClick(event: Event) {
         instrPublicQuestionFail(qid, "Error: Can't connect to server");
     };
 
-    req.open("PUT", `/api/v0/instructors/classes/${info.currentClass}/questions/${qid}`);
+    req.open("PUT", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}`);
     req.send(JSON.stringify(reqJSON));
 }
 
@@ -594,7 +594,7 @@ function onQuestionResultsClick(event: Event) {
         instrAddAnswerFail(qid, "Error: Can't connect to server");
     };
 
-    req.open("GET", `/api/v0/instructors/classes/${info.currentClass}/questions/${qid}`);
+    req.open("GET", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}`);
     req.send();
 }
 
@@ -683,6 +683,10 @@ function instrPublicQuestionFail(qid: string, error: string) {
 /***************
  * Student Page
  **************/
+type answerRequest = {
+    answer_id:string;
+};
+
 
 /****************
  * Student Views
@@ -701,7 +705,45 @@ function displayStudentPage() {
  * Student Class View
  ********************/
 function displayStudentClassPage() {
-    let req:XMLHttpRequest = new XMLHttpRequest();
+    studentClassUpdateQuestions();
+
+    // display page
+    displayStudentPage();
+
+    // display class page
+    let classDiv: HTMLElement = <HTMLElement>document.querySelector("#student_class_page");
+    classDiv.classList.remove("hidden");
+}
+
+function studentClassDisplayQuestions() {
+    let classPageDiv: HTMLElement = <HTMLElement>document.querySelector("#student_class_page");
+
+    // obtain the template
+    let template: HTMLElement = <HTMLElement>document.querySelector("#student_class_page_template");
+
+    // compile the template
+    let func = doT.template(template.innerHTML);
+    // render the data into the template
+    let rendered = func(info.classList.get(info.currentClass));
+    // insert the rendered template into the DOM
+    classPageDiv.innerHTML = rendered;
+
+    // show selected answers
+    for (let q of (<Class>info.classList.get(info.currentClass)).questions) {
+        if (q.selected_answer != "") {
+            StudentClassViewSelectAnswer(q.question_id, q.selected_answer);
+        }
+    }
+
+    // add listeners
+    studentClassListeners();
+}
+
+/******************************
+ * Student Class View Updating
+ *****************************/
+function studentClassUpdateQuestions() {
+    let req: XMLHttpRequest = new XMLHttpRequest();
 
     req.onload = function () {
         if (req.readyState === 4 && req.status === 200) {
@@ -726,30 +768,63 @@ function displayStudentClassPage() {
 
     req.open("GET", `/api/v0/classes/${encodeURI(info.currentClass)}/questions`);
     req.send();
-
-    // display page
-    displayStudentPage();
-
-    // display class page
-    let classDiv: HTMLElement = <HTMLElement>document.querySelector("#student_class_page");
-    classDiv.classList.remove("hidden");
 }
 
-function studentClassDisplayQuestions() {
-    let classPageDiv: HTMLElement = <HTMLElement>document.querySelector("#student_class_page");
+function StudentClassUpdateAnswer(qid: string, aid: string) {
+    let question: question = (<question>getQuestion(info.currentClass, qid));
 
-    // obtain the template
-    let template: HTMLElement = <HTMLElement>document.querySelector("#student_class_page_template");
+    let currentAnswer: string = question.selected_answer;
+    if (currentAnswer !== "") {
+        (<HTMLElement>document.querySelector(`#ansSel_${qid}_${currentAnswer}`)).classList.remove("selected-answer");
+    }
+    question.selected_answer = aid;
 
-    // compile the template
-    let func = doT.template(template.innerHTML);
-    // render the data into the template
-    let rendered = func(info.classList.get(info.currentClass));
-    // insert the rendered template into the DOM
-    classPageDiv.innerHTML = rendered;
+    StudentClassViewSelectAnswer(qid, aid);
+}
 
-    // add listeners
-    studentClassListeners();
+function StudentClassViewSelectAnswer(qid: string, aid: string) {
+    (<HTMLElement>document.querySelector(`#ansSel_${qid}_${aid}`)).classList.add("selected-answer");
+}
+
+/**************************
+ * Student Class listeners
+ *************************/
+function onAnswerClick(event: Event) {
+    let [,qid, aid]: string[] = (<HTMLElement>event.target).id.split("_");
+
+    // send answer
+    //reqJSON
+    let reqJSON: answerRequest = {
+        answer_id: aid,
+    };
+
+    let req: XMLHttpRequest = new XMLHttpRequest();
+
+    req.onload = function () {
+        if (req.readyState === 4 && req.status === 200) {
+            // update answer
+            StudentClassUpdateAnswer(qid, aid);
+            return;
+        }
+        studentClassSubmitAnswerFail("Error: Can't connect to server");
+    };
+
+    req.onerror = function () {
+        studentClassSubmitAnswerFail("Error: Can't connect to server");
+    };
+
+    req.onabort = function () {
+        studentClassSubmitAnswerFail("Error: Can't connect to server");
+    };
+
+    // if question previously selected PUT else POST
+    if ((<question>getQuestion(info.currentClass, qid)).selected_answer === "") {
+        req.open("POST", `/api/v0/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}`);
+    } else {
+        req.open("PUT", `/api/v0/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}`);
+    }
+
+    req.send(JSON.stringify(reqJSON));
 }
 
 /********************************
@@ -758,7 +833,13 @@ function studentClassDisplayQuestions() {
 function studentClassListeners() {
     // refresh listener
     let refreshDiv: HTMLElement = <HTMLElement>document.querySelector("#student_refresh_questions");
-    //refreshDiv.onclick();
+    refreshDiv.onclick = studentClassUpdateQuestions;
+
+    // answer listeners
+    let selectAnswers = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='ansSel_']");
+    for (var i = 0; i < selectAnswers.length; ++i) {
+        selectAnswers[i].onclick = onAnswerClick;
+    }
 }
 
 /**********************************
@@ -768,11 +849,26 @@ function displayStudentClassFail(error: string) {
     console.log("Class error: ", error);
 }
 
+function studentClassSubmitAnswerFail(error: string) {
+    console.log("Submit answer error: ", error);
+}
+
 /*****************
  * main functions
  ****************/
 function setupListeners() {
     setupLoginListeners();
+}
+
+/*******************
+ * Helper functions
+ ******************/
+function getQuestion(cid: string, qid: string): question | undefined {
+    let Class: Class | undefined = info.classList.get(cid);
+    if (Class === undefined) {
+        return undefined;
+    }
+    return Class.questions.find(question => question.question_id === qid);
 }
 
 setupListeners();

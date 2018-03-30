@@ -1,3 +1,7 @@
 .hidden {
     display: none;
 }
+
+.selected-answer {
+    background: blue;
+}
