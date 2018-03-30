@@ -241,17 +241,16 @@ function switchStudentClassView() {
  * login hide views
  ******************/
 function hideLoginPage() {
-    // remove join and create divs
+    // hide join and create divs
     let joinDiv: HTMLElement = <HTMLElement>document.querySelector("#join");
-    joinDiv.innerHTML = "";
+    joinDiv.classList.add("hidden");
 
     let createDiv: HTMLElement = <HTMLElement>document.querySelector("#create");
-    joinDiv.innerHTML = "";
+    createDiv.classList.add("hidden");
 
     //hide login page
     let loginDiv: HTMLElement = <HTMLElement>document.querySelector("#new");
     loginDiv.classList.add("hidden");
-    //loginDiv.
 }
 
 /******************
