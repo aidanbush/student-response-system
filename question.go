@@ -518,8 +518,10 @@ func retrieveQuestionsUser(classID, UAT string) ([]question, error) {
 		return questions, err
 	}
 
-	question := question{}
 	for rows.Next() {
+		// create new question struct
+		question := question{}
+
 		err = rows.StructScan(&question)
 		if err != nil {
 			return questions, err
