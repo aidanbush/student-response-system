@@ -220,6 +220,14 @@ function onCreateClassBtnClick() {
     console.log(reqJSON);
 }
 
+function onStudentListClick() {
+    console.log("onStudentListClick");
+}
+
+function onInstrListClick() {
+    console.log("onInstrListClick");
+}
+
 /********************************
  * login failed request handlers
  *******************************/
@@ -281,18 +289,25 @@ function hideLoginPage() {
  *****************/
 function setupLoginListeners() {
     let joinHeading: HTMLElement = <HTMLElement>document.querySelector("#join_heading");
-    joinHeading.addEventListener("click", onLoginJoinClick);
+    joinHeading.onclick = onLoginJoinClick;
 
     let createHeading: HTMLElement = <HTMLElement>document.querySelector("#create_heading");
-    createHeading.addEventListener("click", onLoginCreateClick);
+    createHeading.onclick = onLoginCreateClick;
 
     let joinBtn: HTMLButtonElement = <HTMLButtonElement>document.querySelector("#join_class_btn");
     joinBtn.onclick = onJoinClassBtnClick;
-    console.log("add join btn listener");
 
     let createBtn: HTMLButtonElement = <HTMLButtonElement>document.querySelector("#new_class_btn");
     createBtn.onclick = onCreateClassBtnClick;
-    console.log("add create btn listener");
+
+    let classListHeading: HTMLElement = <HTMLElement>document.querySelector("#class_list_heading");
+    classListHeading.onclick = onLoginListClick;
+
+    let instrListBtn: HTMLButtonElement = <HTMLButtonElement>document.querySelector("#instr_class_list_button");
+    instrListBtn.onclick = onInstrListClick;
+
+    let studentListBtn: HTMLButtonElement = <HTMLButtonElement>document.querySelector("#student_class_list_button");
+    studentListBtn.onclick = onStudentListClick;
 }
 
 /******************
