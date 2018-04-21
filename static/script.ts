@@ -323,6 +323,15 @@ function displayInstructorPage() {
  * Instructor Class View
  ***********************/
 class instructorClassPage {
+
+    static questionTemplateFunction: doT.RenderFunction;
+
+    static setup() {
+        let template: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_page_template");
+
+        this.questionTemplateFunction = doT.template(template.innerHTML);
+    }
+
     static displayInstructorClassPage() {
         // request questions
         let req: XMLHttpRequest = new XMLHttpRequest();
@@ -363,15 +372,7 @@ class instructorClassPage {
     static instructorClassDisplayQuestions() {
         let classPageDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_page");
 
-        // obtain the template
-        let template: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_page_template");
-
-        // compile the template
-        let func = doT.template(template.innerHTML);
-        // render the data into the template
-        let rendered = func(info.classList.get(info.currentClass));
-        // insert the rendered template into the DOM
-        classPageDiv.innerHTML = rendered;
+        classPageDiv.innerHTML = this.questionTemplateFunction(info.classList.get(info.currentClass));
 
         // add listeners
         this.instructorClassListeners();
@@ -543,10 +544,8 @@ class instructorClassPage {
         let reqJSON: question = <question>(<Class>info.classList.get(info.currentClass)).questions.find(question => question.question_id === qid);
         reqJSON.public = true;
 
-        // make request
         let req: XMLHttpRequest = new XMLHttpRequest();
 
-        // response listener
         req.onload = function () {
             if (req.readyState === 4 && req.status === 200) {
                 // update question
@@ -575,10 +574,8 @@ class instructorClassPage {
         let qid: string = (<HTMLElement>event.target).id.split("_")[1];
         console.log("results question: ", qid);
 
-        // make request
         let req: XMLHttpRequest = new XMLHttpRequest();
 
-        // response listener
         req.onload = function () {
             if (req.readyState === 4 && req.status === 200) {
                 let res: response = JSON.parse(req.responseText);
@@ -600,11 +597,9 @@ class instructorClassPage {
         req.send();
     }
 
-    // TODO: test
     static onDeleteAnswerClick(event: Event) {
         let [, qid, aid]: string[] = (<HTMLElement>event.target).id.split("_");
         console.log("delete question, answer: ", qid, ", ", aid);
-        // delete answer
 
         let reqJSON = {
             answer_id: aid,
@@ -613,7 +608,7 @@ class instructorClassPage {
         let req: XMLHttpRequest = new XMLHttpRequest();
 
         req.onload = function () {
-            if (req.readyState === 4 && req.status === 200) {
+            if (req.readyState === 4 && req.status === 204) {
                 // remove answer
                 (<question>getQuestion(info.currentClass, qid)).answers.filter(a => a.answer_id !== aid);
                 // redraw question
@@ -945,6 +940,7 @@ function setupListeners() {
     loginPage.setupLoginListeners();
 
     studentClassPage.setup();
+    instructorClassPage.setup();
 }
 
 /*******************
