@@ -91,7 +91,7 @@
                         {{~value.answers :answer}}
                         <li>
                             <div>{{=answer.answer_text}}</div>
-                            <button class="answer_delete_btn" id="ansDel_{{=answer.answer_id}}">delete answer</button>
+                            <button class="answer_delete_btn" id="ansDel_{{=value.question_id}}_{{=answer.answer_id}}">delete answer</button>
                         </li>
                         {{~}}
                     </ul>
