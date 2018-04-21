@@ -725,15 +725,15 @@ function instrDeleteAnswerFail(qid: string, aid: string, error: string) {
  *********************************/
 class instructorClassSelection {
 
-    classTemplateFunction: any;
+    static classTemplateFunction: doT.RenderFunction;
 
-    constructor() {
+    static setup() {
         // setup template
         let template: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_list_template");
         this.classTemplateFunction = doT.template(template.innerHTML);
     }
 
-    show() {
+    static show() {
         displayInstructorPage();
 
         // show div
@@ -741,7 +741,7 @@ class instructorClassSelection {
         selectionDiv.classList.remove("hidden");
     }
 
-    hide() {
+    static hide() {
         // empty list
         let classListDiv: HTMLElement = <HTMLElement>document.querySelector("#instr_class_list");
         classListDiv.innerHTML = "";
@@ -750,26 +750,22 @@ class instructorClassSelection {
         selectionDiv.classList.add("hidden");
     }
 
-    fillPage() {
+    static fillPage() {
         let classListDiv: HTMLElement = <HTMLElement>document.querySelector("#instr_class_list");
 
-        // render the data into the template
-        let rendered = this.classTemplateFunction(info.classList.get(info.currentClass));
-        // insert the rendered template into the DOM
-        classListDiv.innerHTML = rendered;
+        classListDiv.innerHTML = this.classTemplateFunction(info.classList.get(info.currentClass));
 
-        //setup listeners
         this.setupListeners();
     }
 
-    setupListeners() {
+    static setupListeners() {
         let classList = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrSwitchClass_']");
         for (var i = 0; i < classList.length; ++i) {
             classList[i].onclick = this.onSwitchClassClick;
         }
     }
 
-    onSwitchClassClick(event: Event) {
+    static onSwitchClassClick(event: Event) {
         let cid: string = (<HTMLElement>event.target).id.split("_")[1];
 
         this.hide();
@@ -829,10 +825,7 @@ class studentClassPage {
     static studentClassDisplayQuestions() {
         let classPageDiv: HTMLElement = <HTMLElement>document.querySelector("#student_class_page");
 
-        // render the data into the template
-        let rendered = this.questionTemplateFunc(info.classList.get(info.currentClass));
-        // insert the rendered template into the DOM
-        classPageDiv.innerHTML = rendered;
+        classPageDiv.innerHTML = this.questionTemplateFunc(info.classList.get(info.currentClass));
 
         // show selected answers
         for (let q of (<Class>info.classList.get(info.currentClass)).questions) {
@@ -841,7 +834,6 @@ class studentClassPage {
             }
         }
 
-        // add listeners
         this.studentClassListeners();
     }
 
