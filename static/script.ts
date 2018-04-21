@@ -73,7 +73,6 @@ type joinRequest = {
 class loginPage {
 
     static setup() {
-        //
     }
 
     static onLoginJoinClick() {
@@ -204,7 +203,7 @@ class loginPage {
         info.currentPage = pageEnum.instrView;
 
         // call display view
-        displayInstructorClassPage();
+        instructorClassPage.displayInstructorClassPage();
     }
 
     static switchStudentClassView() {
@@ -296,7 +295,6 @@ class loginPage {
     static createClassRequest(reqJSON: createRequest) {
         let req: XMLHttpRequest = new XMLHttpRequest();
 
-        // response listener
         req.onload = function () {
             if (req.readyState === 4 && req.status === 200) {
                 let res: createRequest = JSON.parse(req.responseText);
@@ -348,390 +346,388 @@ function displayInstructorPage() {
 /************************
  * Instructor Class View
  ***********************/
-function displayInstructorClassPage() {
-    // request questions
-    let req: XMLHttpRequest = new XMLHttpRequest();
+class instructorClassPage {
+    static displayInstructorClassPage() {
+        // request questions
+        let req: XMLHttpRequest = new XMLHttpRequest();
 
-    // response listener
-    req.onload = function () {
-        if (req.readyState === 4 && req.status === 200) {
-            // get add questions to class object
-            let res: question[] = JSON.parse(req.responseText);
+        // response listener
+        req.onload = function () {
+            if (req.readyState === 4 && req.status === 200) {
+                // get add questions to class object
+                let res: question[] = JSON.parse(req.responseText);
 
-            // set questions
-            (<Class>info.classList.get(info.currentClass)).questions = res;
-            instructorClassDisplayQuestions();
-            return;
-        }
-        displayInstructorClassFail("Error: Failed to create class");
-    };
+                // set questions
+                (<Class>info.classList.get(info.currentClass)).questions = res;
+                instructorClassPage.instructorClassDisplayQuestions();
+                return;
+            }
+            instructorClassPage.displayInstructorClassFail("Error: Failed to create class");
+        };
 
-    req.onerror = function () {
-        displayInstructorClassFail("Error: Can't connect to server");
-    };
+        req.onerror = function () {
+            instructorClassPage.displayInstructorClassFail("Error: Can't connect to server");
+        };
 
-    req.onabort = function () {
-        displayInstructorClassFail("Error: Can't connect to server");
-    };
+        req.onabort = function () {
+            instructorClassPage.displayInstructorClassFail("Error: Can't connect to server");
+        };
 
-    req.open("GET", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions`);
-    req.send();
+        req.open("GET", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions`);
+        req.send();
 
-    // display instructor page
-    displayInstructorPage();
+        // display instructor page
+        displayInstructorPage();
 
-    // display class page
-    let classDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_page");
-    classDiv.classList.remove("hidden");
-}
-
-function instructorClassDisplayQuestions() {
-    let classPageDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_page");
-
-    // obtain the template
-    let template: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_page_template");
-
-    // compile the template
-    let func = doT.template(template.innerHTML);
-    // render the data into the template
-    let rendered = func(info.classList.get(info.currentClass));
-    // insert the rendered template into the DOM
-    classPageDiv.innerHTML = rendered;
-
-    // add listeners
-    instructorClassListeners();
-}
-
-/*********************************
- * Instructor Class View updating
- ********************************/
-// clean up
-function instructorViewAddQuestion(question: question) {
-    /* redraw view */
-    instructorClassDisplayQuestions();
-}
-
-function instructorViewUpdateQuestion(question: question) {
-    /* redraw view */
-    instructorClassDisplayQuestions();
-}
-
-function instructorViewAddAnswer(answer: answer) {
-    /* redraw view */
-    instructorClassDisplayQuestions();
-}
-
-function instructorViewQuestionResults(response: response) {
-    /* draw results */
-}
-
-function instructorViewDeleteQuestion(qid: string) {
-    /* redraw view */
-    instructorClassDisplayQuestions();
-}
-
-/*****************************
- * Instructor Class Listeners
- ****************************/
-function onCreateQuestionClick() {
-    // let nameInput: HTMLElement
-    let nameInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#instr_new_question_name");
-    if (nameInput.value === "") {
-        instrCreateQuestionFail("Error: question Requires name");
-        return;
+        // display class page
+        let classDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_page");
+        classDiv.classList.remove("hidden");
     }
 
-    // setup request object
-    let reqJSON: question = {
-        question_title: nameInput.value,
-        question_id: "",
-        public: false,
-        class_id: info.currentClass,
-        answers: [],
-        selected_answer: "",
-    };
+    static instructorClassDisplayQuestions() {
+        let classPageDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_page");
 
+        // obtain the template
+        let template: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_page_template");
 
-    // make request
-    let req: XMLHttpRequest = new XMLHttpRequest();
+        // compile the template
+        let func = doT.template(template.innerHTML);
+        // render the data into the template
+        let rendered = func(info.classList.get(info.currentClass));
+        // insert the rendered template into the DOM
+        classPageDiv.innerHTML = rendered;
 
-    // response listener
-    req.onload = function () {
-        if (req.readyState === 4 && req.status === 200) {
-            // get add questions to class object
-            let res: question = JSON.parse(req.responseText);
-
-            // insert question to array
-            (<Class>info.classList.get(info.currentClass)).questions.push(res);
-
-            instructorViewAddQuestion(res);
-            return;
-        }
-        instrCreateQuestionFail("Error: Failed to create question");
-    };
-
-    req.onerror = function () {
-        instrCreateQuestionFail("Error: Can't connect to server");
-    };
-
-    req.onabort = function () {
-        instrCreateQuestionFail("Error: Can't connect to server");
-    };
-
-    req.open("POST", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions`);
-    req.send(JSON.stringify(reqJSON));
-}
-
-/********************************
- * Instructor Question Listeners
- *******************************/
-function onDeleteQuestionClick(event: Event) {
-    let qid: string = (<HTMLElement>event.target).id.split("_")[1]
-    // send delete request
-    console.log("delete question: ", qid);
-
-    let req: XMLHttpRequest = new XMLHttpRequest();
-
-    req.onload = function () {
-        if (req.readyState === 4 && req.status === 204) {
-            // delete local copy
-            let Class: Class = <Class>info.classList.get(info.currentClass);
-            Class.questions = Class.questions.filter(question => question.question_id !== qid);
-            // redraw
-            instructorViewDeleteQuestion(qid);
-            return;
-        }
-        instrDeleteQuestionFail(qid, "Error: Can't connect to server");
-    };
-
-    req.onerror = function () {
-        instrDeleteQuestionFail(qid, "Error: Can't connect to server");
-    };
-
-    req.onabort = function () {
-        instrDeleteQuestionFail(qid, "Error: Can't connect to server");
-    };
-
-    req.open("DELETE", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}`);
-    req.send();
-}
-
-function onAddAnswerClick(event: Event) {
-    let qid: string = (<HTMLElement>event.target).id.split("_")[1];
-
-    // grab question text
-    let answerText: string = (<HTMLInputElement>document.querySelector(`#instrQuestionAddText_${encodeURI(qid)}`)).value;
-    if (answerText === "") {
-        instrAddAnswerFail(qid, "Error: Enter a number");
-        return;
+        // add listeners
+        this.instructorClassListeners();
     }
 
-    // setup request object
-    let reqJSON: answer = {
-        answer_id: "",
-        answer_text: answerText,
-        question_id: "",
-    };
+    /*********************************
+     * Instructor Class View updating
+     ********************************/
+    // clean up
+    static instructorViewAddQuestion(question: question) {
+        this.instructorClassDisplayQuestions();
+    }
 
-    // make request
-    let req: XMLHttpRequest = new XMLHttpRequest();
+    static instructorViewUpdateQuestion(question: question) {
+        this.instructorClassDisplayQuestions();
+    }
 
-    // response listener
-    req.onload = function () {
-        if (req.readyState === 4 && req.status === 200) {
-            let res: answer = JSON.parse(req.responseText);
-            console.log("create question req success", res);
+    static instructorViewAddAnswer(answer: answer) {
+        this.instructorClassDisplayQuestions();
+    }
 
-            // insert answer into error
-            (<question>(<Class>info.classList.get(info.currentClass)).questions.find(question => question.question_id === qid)).answers.push(res);
-            // assume not empty
-            instructorViewAddAnswer(res);
+    static instructorViewQuestionResults(response: response) {
+        /* draw results */
+    }
+
+    static instructorViewDeleteQuestion(qid: string) {
+        this.instructorClassDisplayQuestions();
+    }
+
+    /*****************************
+     * Instructor Class Listeners
+     ****************************/
+    static onCreateQuestionClick() {
+        // let nameInput: HTMLElement
+        let nameInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#instr_new_question_name");
+        if (nameInput.value === "") {
+            instructorClassPage.instrCreateQuestionFail("Error: question Requires name");
             return;
         }
-        instrAddAnswerFail(qid, "Error: Can't connect to server");
-    };
 
-    req.onerror = function () {
-        instrAddAnswerFail(qid, "Error: Can't connect to server");
-    };
+        // setup request object
+        let reqJSON: question = {
+            question_title: nameInput.value,
+            question_id: "",
+            public: false,
+            class_id: info.currentClass,
+            answers: [],
+            selected_answer: "",
+        };
 
-    req.onabort = function () {
-        instrAddAnswerFail(qid, "Error: Can't connect to server");
-    };
 
-    req.open("POST", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}`);
-    req.send(JSON.stringify(reqJSON));
-}
+        // make request
+        let req: XMLHttpRequest = new XMLHttpRequest();
 
-function onPublicQuestionClick(event: Event) {
-    let qid: string = (<HTMLElement>event.target).id.split("_")[1]
-    // make public request
-    console.log("make public question: ", qid);
+        // response listener
+        req.onload = function () {
+            if (req.readyState === 4 && req.status === 200) {
+                // get add questions to class object
+                let res: question = JSON.parse(req.responseText);
 
-    // setup request object
-    let reqJSON: question = <question>(<Class>info.classList.get(info.currentClass)).questions.find(question => question.question_id === qid);
-    reqJSON.public = true;
+                // insert question to array
+                (<Class>info.classList.get(info.currentClass)).questions.push(res);
 
-    // make request
-    let req: XMLHttpRequest = new XMLHttpRequest();
+                instructorClassPage.instructorViewAddQuestion(res);
+                return;
+            }
+            instructorClassPage.instrCreateQuestionFail("Error: Failed to create question");
+        };
 
-    // response listener
-    req.onload = function () {
-        if (req.readyState === 4 && req.status === 200) {
-            // update question
-            let question: question = <question>(<Class>info.classList.get(info.currentClass)).questions.find(question => question.question_id === qid);
-            question.public = true;
+        req.onerror = function () {
+            instructorClassPage.instrCreateQuestionFail("Error: Can't connect to server");
+        };
 
-            instructorViewUpdateQuestion(question);
+        req.onabort = function () {
+            instructorClassPage.instrCreateQuestionFail("Error: Can't connect to server");
+        };
+
+        req.open("POST", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions`);
+        req.send(JSON.stringify(reqJSON));
+    }
+
+    /********************************
+     * Instructor Question Listeners
+     *******************************/
+    static onDeleteQuestionClick(event: Event) {
+        let qid: string = (<HTMLElement>event.target).id.split("_")[1]
+        // send delete request
+        console.log("delete question: ", qid);
+
+        let req: XMLHttpRequest = new XMLHttpRequest();
+
+        req.onload = function () {
+            if (req.readyState === 4 && req.status === 204) {
+                // delete local copy
+                let Class: Class = <Class>info.classList.get(info.currentClass);
+                Class.questions = Class.questions.filter(question => question.question_id !== qid);
+                // redraw
+                instructorClassPage.instructorViewDeleteQuestion(qid);
+                return;
+            }
+            instructorClassPage.instrDeleteQuestionFail(qid, "Error: Can't connect to server");
+        };
+
+        req.onerror = function () {
+            instructorClassPage.instrDeleteQuestionFail(qid, "Error: Can't connect to server");
+        };
+
+        req.onabort = function () {
+            instructorClassPage.instrDeleteQuestionFail(qid, "Error: Can't connect to server");
+        };
+
+        req.open("DELETE", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}`);
+        req.send();
+    }
+
+    static onAddAnswerClick(event: Event) {
+        let qid: string = (<HTMLElement>event.target).id.split("_")[1];
+
+        // grab question text
+        let answerText: string = (<HTMLInputElement>document.querySelector(`#instrQuestionAddText_${encodeURI(qid)}`)).value;
+        if (answerText === "") {
+            instructorClassPage.instrAddAnswerFail(qid, "Error: Enter an answer");
             return;
         }
-        instrPublicQuestionFail(qid, "Error: Can't connect to server");
-    };
 
-    req.onerror = function () {
-        instrPublicQuestionFail(qid, "Error: Can't connect to server");
-    };
+        // setup request object
+        let reqJSON: answer = {
+            answer_id: "",
+            answer_text: answerText,
+            question_id: "",
+        };
 
-    req.onabort = function () {
-        instrPublicQuestionFail(qid, "Error: Can't connect to server");
-    };
+        // make request
+        let req: XMLHttpRequest = new XMLHttpRequest();
 
-    req.open("PUT", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}`);
-    req.send(JSON.stringify(reqJSON));
-}
+        // response listener
+        req.onload = function () {
+            if (req.readyState === 4 && req.status === 200) {
+                let res: answer = JSON.parse(req.responseText);
+                console.log("create question req success", res);
 
-function onQuestionResultsClick(event: Event) {
-    let qid: string = (<HTMLElement>event.target).id.split("_")[1];
-    console.log("results question: ", qid);
+                // insert answer into error
+                (<question>(<Class>info.classList.get(info.currentClass)).questions.find(question => question.question_id === qid)).answers.push(res);
+                // assume not empty
+                instructorClassPage.instructorViewAddAnswer(res);
+                return;
+            }
+            instructorClassPage.instrAddAnswerFail(qid, "Error: Can't connect to server");
+        };
 
-    // make request
-    let req: XMLHttpRequest = new XMLHttpRequest();
+        req.onerror = function () {
+            instructorClassPage.instrAddAnswerFail(qid, "Error: Can't connect to server");
+        };
 
-    // response listener
-    req.onload = function () {
-        if (req.readyState === 4 && req.status === 200) {
-            let res: response = JSON.parse(req.responseText);
-            // TODO: draw results
-            return;
+        req.onabort = function () {
+            instructorClassPage.instrAddAnswerFail(qid, "Error: Can't connect to server");
+        };
+
+        req.open("POST", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}`);
+        req.send(JSON.stringify(reqJSON));
+    }
+
+    static onPublicQuestionClick(event: Event) {
+        let qid: string = (<HTMLElement>event.target).id.split("_")[1]
+        // make public request
+        console.log("make public question: ", qid);
+
+        // setup request object
+        let reqJSON: question = <question>(<Class>info.classList.get(info.currentClass)).questions.find(question => question.question_id === qid);
+        reqJSON.public = true;
+
+        // make request
+        let req: XMLHttpRequest = new XMLHttpRequest();
+
+        // response listener
+        req.onload = function () {
+            if (req.readyState === 4 && req.status === 200) {
+                // update question
+                let question: question = <question>(<Class>info.classList.get(info.currentClass)).questions.find(question => question.question_id === qid);
+                question.public = true;
+
+                instructorClassPage.instructorViewUpdateQuestion(question);
+                return;
+            }
+            instructorClassPage.instrPublicQuestionFail(qid, "Error: Can't connect to server");
+        };
+
+        req.onerror = function () {
+            instructorClassPage.instrPublicQuestionFail(qid, "Error: Can't connect to server");
+        };
+
+        req.onabort = function () {
+            instructorClassPage.instrPublicQuestionFail(qid, "Error: Can't connect to server");
+        };
+
+        req.open("PUT", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}`);
+        req.send(JSON.stringify(reqJSON));
+    }
+
+    static onQuestionResultsClick(event: Event) {
+        let qid: string = (<HTMLElement>event.target).id.split("_")[1];
+        console.log("results question: ", qid);
+
+        // make request
+        let req: XMLHttpRequest = new XMLHttpRequest();
+
+        // response listener
+        req.onload = function () {
+            if (req.readyState === 4 && req.status === 200) {
+                let res: response = JSON.parse(req.responseText);
+                // TODO: draw results
+                return;
+            }
+            instructorClassPage.instrAddAnswerFail(qid, "Error: Error in retrieving results");
+        };
+
+        req.onerror = function () {
+            instructorClassPage.instrAddAnswerFail(qid, "Error: Can't connect to server");
+        };
+
+        req.onabort = function () {
+            instructorClassPage.instrAddAnswerFail(qid, "Error: Can't connect to server");
+        };
+
+        req.open("GET", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}`);
+        req.send();
+    }
+
+    // TODO: test
+    static onDeleteAnswerClick(event: Event) {
+        let [, qid, aid]: string[] = (<HTMLElement>event.target).id.split("_");
+        console.log("delete question, answer: ", qid, ", ", aid);
+        // delete answer
+
+        let reqJSON = {
+            answer_id: aid,
+        };
+
+        let req: XMLHttpRequest = new XMLHttpRequest();
+
+        req.onload = function () {
+            if (req.readyState === 4 && req.status === 200) {
+                // remove answer
+                (<question>getQuestion(info.currentClass, qid)).answers.filter(a => a.answer_id !== aid);
+                // redraw question
+                instructorClassPage.instructorViewUpdateQuestion(<question>getQuestion(info.currentClass, qid));
+                return;
+            }
+            instructorClassPage.instrDeleteAnswerFail(qid, aid, "Error: Can't connect to server");
+        };
+
+        req.onerror = function () {
+            instructorClassPage.instrDeleteAnswerFail(qid, aid, "Error: Can't connect to server");
+        };
+
+        req.onabort = function () {
+            instructorClassPage.instrDeleteAnswerFail(qid, aid, "Error: Can't connect to server");
+        };
+
+        req.open("DELETE", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}`);
+        req.send(JSON.stringify(reqJSON));
+    }
+
+    /***********************************
+     * Instructor Class Listeners setup
+     **********************************/
+    static instructorClassListeners() {
+        this.instructorQuestionListeners();
+
+        this.instructorClassAnswerListeners();
+
+        console.log("add create question listener");
+
+        let createQuestion: HTMLElement = <HTMLElement>document.querySelector("#instr_new_question_btn");
+        createQuestion.onclick = this.onCreateQuestionClick;
+    }
+
+    static instructorQuestionListeners() {
+        let deleteQuestions = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrQuestionDel_']");
+        for (var i = 0; i < deleteQuestions.length; ++i) {
+            deleteQuestions[i].onclick = this.onDeleteQuestionClick;
         }
-        instrAddAnswerFail(qid, "Error: Can't connect to server");
-    };
 
-    req.onerror = function () {
-        instrAddAnswerFail(qid, "Error: Can't connect to server");
-    };
-
-    req.onabort = function () {
-        instrAddAnswerFail(qid, "Error: Can't connect to server");
-    };
-
-    req.open("GET", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}`);
-    req.send();
-}
-
-// TODO: test
-function onDeleteAnswerClick(event: Event) {
-    let [, qid, aid]: string[] = (<HTMLElement>event.target).id.split("_");
-    console.log("delete question, answer: ", qid, ", ", aid);
-    // delete answer
-
-    let reqJSON = {
-        answer_id: aid,
-    };
-
-    let req: XMLHttpRequest = new XMLHttpRequest();
-
-    req.onload = function () {
-        if (req.readyState === 4 && req.status === 200) {
-            // remove answer
-            (<question>getQuestion(info.currentClass, qid)).answers.filter(a => a.answer_id !== aid);
-            // redraw question
-            instructorViewUpdateQuestion(<question>getQuestion(info.currentClass, qid));
-            return;
+        let addAnswers = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrQuestionAdd_']");
+        for (var i = 0; i < addAnswers.length; ++i) {
+            addAnswers[i].onclick = this.onAddAnswerClick;
         }
-        instrDeleteAnswerFail(qid, aid, "Error: Can't connect to server");
-    };
 
-    req.onerror = function () {
-        instrDeleteAnswerFail(qid, aid, "Error: Can't connect to server");
-    };
+        let questionsPublic = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrQuestionPub_']");
+        for (var i = 0; i < questionsPublic.length; ++i) {
+            questionsPublic[i].onclick = this.onPublicQuestionClick;
+        }
 
-    req.onabort = function () {
-        instrDeleteAnswerFail(qid, aid, "Error: Can't connect to server");
-    };
-
-    req.open("DELETE", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}`);
-    req.send(JSON.stringify(reqJSON));
-}
-
-/***********************************
- * Instructor Class Listeners setup
- **********************************/
-function instructorClassListeners() {
-    instructorQuestionListeners();
-
-    instructorClassAnswerListeners();
-
-    console.log("add create question listener");
-
-    let createQuestion: HTMLElement = <HTMLElement>document.querySelector("#instr_new_question_btn");
-    createQuestion.onclick = onCreateQuestionClick;
-}
-
-function instructorQuestionListeners() {
-    let deleteQuestions = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrQuestionDel_']");
-    for (var i = 0; i < deleteQuestions.length; ++i) {
-        deleteQuestions[i].onclick = onDeleteQuestionClick;
+        let questionsResults = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrQuestionRes_']");
+        for (var i = 0; i < questionsResults.length; ++i) {
+            questionsResults[i].onclick = this.onQuestionResultsClick;
+        }
     }
 
-    let addAnswers = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrQuestionAdd_']");
-    for (var i = 0; i < addAnswers.length; ++i) {
-        addAnswers[i].onclick = onAddAnswerClick;
+    static instructorClassAnswerListeners() {
+        let deleteAnswers = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='ansDel_']");
+        for (var i = 0; i < deleteAnswers.length; ++i) {
+            deleteAnswers[i].onclick = this.onDeleteAnswerClick;
+        }
     }
 
-    let questionsPublic = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrQuestionPub_']");
-    for (var i = 0; i < questionsPublic.length; ++i) {
-        questionsPublic[i].onclick = onPublicQuestionClick;
+    /*************************************
+     * instructor failed request handlers
+     ************************************/
+    static displayInstructorClassFail(error: string) {
+        console.log("Class error: ", error);
     }
 
-    let questionsResults = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrQuestionRes_']");
-    for (var i = 0; i < questionsResults.length; ++i) {
-        questionsResults[i].onclick = onQuestionResultsClick;
+    static instrCreateQuestionFail(error: string) {
+        console.log("create question error: ", error);
     }
-}
 
-function instructorClassAnswerListeners() {
-    let deleteAnswers = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='ansDel_']");
-    for (var i = 0; i < deleteAnswers.length; ++i) {
-        deleteAnswers[i].onclick = onDeleteAnswerClick;
+    static instrAddAnswerFail(qid: string, error: string) {
+        console.log("add answer error: ", error);
     }
-}
 
-/*************************************
- * instructor failed request handlers
- ************************************/
-function displayInstructorClassFail(error: string) {
-    console.log("Class error: ", error);
-}
+    static instrDeleteQuestionFail(qid: string, error: string) {
+        console.log("delete question error: ", error);
+    }
 
-function instrCreateQuestionFail(error: string) {
-    console.log("create question error: ", error);
-}
+    static instrPublicQuestionFail(qid: string, error: string) {
+        console.log("public question error: ", error);
+    }
 
-function instrAddAnswerFail(qid: string, error: string) {
-    console.log("add answer error: ", error);
-}
-
-function instrDeleteQuestionFail(qid: string, error: string) {
-    console.log("delete question error: ", error);
-}
-
-function instrPublicQuestionFail(qid: string, error: string) {
-    console.log("public question error: ", error);
-}
-
-function instrDeleteAnswerFail(qid: string, aid: string, error: string) {
-    console.log("delete answer error: ", error);
+    static instrDeleteAnswerFail(qid: string, aid: string, error: string) {
+        console.log("delete answer error: ", error);
+    }
 }
 
 /**********************************
