@@ -70,246 +70,260 @@ type joinRequest = {
 /**************************
  * login display listeners
  *************************/
-function onLoginJoinClick() {
-    let joinDiv: HTMLElement = <HTMLElement>document.querySelector("#join");
-    if (joinDiv.classList.contains("hidden")) {
-        joinDiv.classList.remove("hidden");
-    } else {
+class loginPage {
+
+    static setup() {
+        //
+    }
+
+    static onLoginJoinClick() {
+        let joinDiv: HTMLElement = <HTMLElement>document.querySelector("#join");
+        if (joinDiv.classList.contains("hidden")) {
+            joinDiv.classList.remove("hidden");
+        } else {
+            joinDiv.classList.add("hidden");
+        }
+        return;
+    }
+
+    static onLoginCreateClick() {
+        let createDiv: HTMLElement = <HTMLElement>document.querySelector("#create");
+        if (createDiv.classList.contains("hidden")) {
+            createDiv.classList.remove("hidden");
+        } else {
+            createDiv.classList.add("hidden");
+        }
+        return;
+    }
+
+    static onLoginListClick() {
+        let listDiv: HTMLElement = <HTMLElement>document.querySelector("#list_classes");
+        if (listDiv.classList.contains("hidden")) {
+            listDiv.classList.remove("hidden");
+        } else {
+            listDiv.classList.add("hidden");
+        }
+    }
+
+    /**********************
+     * login btn listeners
+     *********************/
+    static onJoinClassBtnClick() {
+        console.log("onJoinClassBtnClick");
+        //get info if exists
+        let classIDInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#join_class_id");
+        if (classIDInput.value === "") {
+            loginPage.joinClassReqFail("Error: Requires class ID");
+            return;
+        }
+
+        let classID = classIDInput.value;
+
+        let nameInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#student_name");
+        if (nameInput.value === "" && info.name === "") {
+            loginPage.joinClassReqFail("Error: Requires your name");
+            return;
+        } else if (info.name === "") {
+            info.name = nameInput.value;
+        }
+
+        // create request json object
+        let reqJSON: joinRequest = {
+            person: {
+                name: info.name,
+            },
+        };
+
+        loginPage.joinClassRequest(classID, reqJSON);
+    }
+
+    static onCreateClassBtnClick() {
+        console.log("onCreateClassBtnClick")
+
+        let classNameInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#new_class_name");
+        if (classNameInput.value === "") {
+            loginPage.createClassReqFail("Error: Requires class name");
+            return;
+        }
+
+        let nameInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#instructor_name");
+        if (nameInput.value === "" && info.name === "") {
+            loginPage.createClassReqFail("Error: Requires your name");
+            return;
+        } else if (info.name === "") {
+            info.name = nameInput.value;
+        }
+
+        // create request json object
+        let reqJSON: createRequest = {
+            person: {
+                name: info.name,
+            },
+            class: {
+                class_name: classNameInput.value,
+                class_id: "",
+                questions: [],
+            },
+        };
+
+        loginPage.createClassRequest(reqJSON);
+    }
+
+    static onStudentListClick() {
+        console.log("onStudentListClick");
+    }
+
+    static onInstrListClick() {
+        console.log("onInstrListClick");
+    }
+
+    /********************************
+     * login failed request handlers
+     *******************************/
+    static joinClassReqFail(error: string) {
+        let joinDiv: HTMLElement = <HTMLElement>document.querySelector("#join_input_error");
+        joinDiv.innerHTML = error;
+
+        console.log("join class error: ", error);
+    }
+
+    static createClassReqFail(error: string) {
+        let classDiv: HTMLElement = <HTMLElement>document.querySelector("#new_input_error");
+        classDiv.innerHTML = error;
+
+        console.log("create class error: ", error);
+    }
+
+    /******************************
+     * login switch view functions
+     *****************************/
+    static switchInstructorClassView() {
+        // hide login page
+        this.hideLoginPage();
+
+        info.currentPage = pageEnum.instrView;
+
+        // call display view
+        displayInstructorClassPage();
+    }
+
+    static switchStudentClassView() {
+        // hide login page
+        this.hideLoginPage();
+
+        info.currentPage = pageEnum.StudentView;
+
+        // call display view
+        studentClassPage.displayStudentClassPage();
+    }
+
+    /*******************
+     * login hide views
+     ******************/
+    static hideLoginPage() {
+        // hide join and create divs
+        let joinDiv: HTMLElement = <HTMLElement>document.querySelector("#join");
         joinDiv.classList.add("hidden");
-    }
-    return;
-}
 
-function onLoginCreateClick() {
-    let createDiv: HTMLElement = <HTMLElement>document.querySelector("#create");
-    if (createDiv.classList.contains("hidden")) {
-        createDiv.classList.remove("hidden");
-    } else {
+        let createDiv: HTMLElement = <HTMLElement>document.querySelector("#create");
         createDiv.classList.add("hidden");
-    }
-    return;
-}
 
-function onLoginListClick() {
-    let listDiv: HTMLElement = <HTMLElement>document.querySelector("#list_classes");
-    if (listDiv.classList.contains("hidden")) {
-        listDiv.classList.remove("hidden");
-    } else {
-        listDiv.classList.add("hidden");
-    }
-}
-
-/**********************
- * login btn listeners
- *********************/
-function onJoinClassBtnClick() {
-    console.log("onJoinClassBtnClick");
-    //get info if exists
-    let classIDInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#join_class_id");
-    if (classIDInput.value === "") {
-        joinClassReqFail("Error: Requires class ID");
-        return;
-    }
-    let classID = classIDInput.value;
-
-    let nameInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#student_name");
-    if (nameInput.value === "" && info.name === "") {
-        joinClassReqFail("Error: Requires your name");
-        return;
-    } else if (info.name === "") {
-        info.name = nameInput.value;
+        //hide login page
+        let loginDiv: HTMLElement = <HTMLElement>document.querySelector("#new");
+        loginDiv.classList.add("hidden");
     }
 
-    console.log("name: ", info.name);
+    /******************
+     * login listeners
+     *****************/
+    static setupLoginListeners() {
+        let joinHeading: HTMLElement = <HTMLElement>document.querySelector("#join_heading");
+        joinHeading.onclick = this.onLoginJoinClick;
 
-    // create request json object
-    let reqJSON: joinRequest = {
-        person: {
-            name: info.name,
-        },
-    };
+        let createHeading: HTMLElement = <HTMLElement>document.querySelector("#create_heading");
+        createHeading.onclick = this.onLoginCreateClick;
 
-    //make request
-    let req: XMLHttpRequest = new XMLHttpRequest();
+        let joinBtn: HTMLButtonElement = <HTMLButtonElement>document.querySelector("#join_class_btn");
+        joinBtn.onclick = this.onJoinClassBtnClick;
 
-    // response listener
-    req.onload = function () {
-        if (req.readyState === 4 && req.status === 200) {
-            let res: createRequest = JSON.parse(req.responseText);
-            console.log("join class req success", res);
-            // add to list of classes
-            info.classList.set(res.class.class_id, res.class);
-            info.currentClass = res.class.class_id;
+        let createBtn: HTMLButtonElement = <HTMLButtonElement>document.querySelector("#new_class_btn");
+        createBtn.onclick = this.onCreateClassBtnClick;
 
-            switchStudentClassView();
-            return;
-        }
-        joinClassReqFail("Failed to join class");
-    };
+        let classListHeading: HTMLElement = <HTMLElement>document.querySelector("#class_list_heading");
+        classListHeading.onclick = this.onLoginListClick;
 
-    req.onerror = function () {
-        joinClassReqFail("Error: Can't connect to server");
-    };
+        let instrListBtn: HTMLButtonElement = <HTMLButtonElement>document.querySelector("#instr_class_list_button");
+        instrListBtn.onclick = this.onInstrListClick;
 
-    req.onabort = function () {
-        joinClassReqFail("Error: Can't connect to server");
-    };
-
-    req.open("POST", `/api/v0/classes/${encodeURI(classID)}`);
-    req.send(JSON.stringify(reqJSON));
-    console.log(reqJSON);
-}
-
-function onCreateClassBtnClick() {
-    console.log("onCreateClassBtnClick")
-
-    let classNameInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#new_class_name");
-    if (classNameInput.value === "") {
-        createClassReqFail("Error: Requires class name");
-        return;
+        let studentListBtn: HTMLButtonElement = <HTMLButtonElement>document.querySelector("#student_class_list_button");
+        studentListBtn.onclick = this.onStudentListClick;
     }
 
-    let nameInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#instructor_name");
-    if (nameInput.value === "" && info.name === "") {
-        createClassReqFail("Error: Requires your name");
-        return;
-    } else if (info.name === "") {
-        info.name = nameInput.value;
+    /**************
+     * XMLRequests
+     *************/
+    static joinClassRequest(classID: string, reqJSON: joinRequest) {
+        let req: XMLHttpRequest = new XMLHttpRequest();
+
+        // response listener
+        req.onload = function () {
+            if (req.readyState === 4 && req.status === 200) {
+                let res: createRequest = JSON.parse(req.responseText);
+                console.log("join class req success", res);
+                // add to list of classes
+                info.classList.set(res.class.class_id, res.class);
+                info.currentClass = res.class.class_id;
+
+                loginPage.switchStudentClassView();
+                return;
+            }
+            loginPage.joinClassReqFail("Failed to join class");
+        };
+
+        req.onerror = function () {
+            loginPage.joinClassReqFail("Error: Can't connect to server");
+        };
+
+        req.onabort = function () {
+            loginPage.joinClassReqFail("Error: Can't connect to server");
+        };
+
+        req.open("POST", `/api/v0/classes/${encodeURI(classID)}`);
+        req.send(JSON.stringify(reqJSON));
+        console.log(reqJSON);
     }
 
-    // create request json object
-    let reqJSON: createRequest = {
-        person: {
-            name: info.name,
-        },
-        class: {
-            class_name: classNameInput.value,
-            class_id: "",
-            questions: [],
-        },
-    };
+    static createClassRequest(reqJSON: createRequest) {
+        let req: XMLHttpRequest = new XMLHttpRequest();
 
-    // make request
-    let req: XMLHttpRequest = new XMLHttpRequest();
+        // response listener
+        req.onload = function () {
+            if (req.readyState === 4 && req.status === 200) {
+                let res: createRequest = JSON.parse(req.responseText);
 
-    // response listener
-    req.onload = function () {
-        if (req.readyState === 4 && req.status === 200) {
-            let res: createRequest = JSON.parse(req.responseText);
+                // add to list of classes
+                info.classList.set(res.class.class_id, res.class);
+                info.currentClass = res.class.class_id;
 
-            // add to list of classes
-            info.classList.set(res.class.class_id, res.class);
-            info.currentClass = res.class.class_id;
+                loginPage.switchInstructorClassView();
+                return;
+            }
+            loginPage.createClassReqFail("Error: Failed to create class");
+        };
 
-            switchInstructorClassView();
-            return;
-        }
-        createClassReqFail("Error: Failed to create class");
-    };
+        req.onerror = function () {
+            loginPage.createClassReqFail("Error: Can't connect to server");
+        };
 
-    req.onerror = function () {
-        createClassReqFail("Error: Can't connect to server");
-    };
+        req.onabort = function () {
+            loginPage.createClassReqFail("Error: Can't connect to server");
+        };
 
-    req.onabort = function () {
-        createClassReqFail("Error: Can't connect to server");
-    };
-
-    req.open("POST", `/api/v0/classes`);
-    req.send(JSON.stringify(reqJSON));
-    console.log(reqJSON);
+        req.open("POST", `/api/v0/classes`);
+        req.send(JSON.stringify(reqJSON));
+        console.log(reqJSON);
+    }
 }
-
-function onStudentListClick() {
-    console.log("onStudentListClick");
-}
-
-function onInstrListClick() {
-    console.log("onInstrListClick");
-}
-
-/********************************
- * login failed request handlers
- *******************************/
-function joinClassReqFail(error: string) {
-    let joinDiv: HTMLElement = <HTMLElement>document.querySelector("#join_input_error");
-    joinDiv.innerHTML = error;
-
-    console.log("join class error: ", error);
-}
-
-function createClassReqFail(error: string) {
-    let classDiv: HTMLElement = <HTMLElement>document.querySelector("#new_input_error");
-    classDiv.innerHTML = error;
-
-    console.log("create class error: ", error);
-}
-
-/******************************
- * login switch view functions
- *****************************/
-function switchInstructorClassView() {
-    // hide login page
-    hideLoginPage();
-
-    info.currentPage = pageEnum.instrView;
-
-    // call display view
-    displayInstructorClassPage();
-}
-
-function switchStudentClassView() {
-    // hide login page
-    hideLoginPage();
-
-    info.currentPage = pageEnum.StudentView;
-
-    // call display view
-    studentClassPage.displayStudentClassPage();
-}
-
-/*******************
- * login hide views
- ******************/
-function hideLoginPage() {
-    // hide join and create divs
-    let joinDiv: HTMLElement = <HTMLElement>document.querySelector("#join");
-    joinDiv.classList.add("hidden");
-
-    let createDiv: HTMLElement = <HTMLElement>document.querySelector("#create");
-    createDiv.classList.add("hidden");
-
-    //hide login page
-    let loginDiv: HTMLElement = <HTMLElement>document.querySelector("#new");
-    loginDiv.classList.add("hidden");
-}
-
-/******************
- * login listeners
- *****************/
-function setupLoginListeners() {
-    let joinHeading: HTMLElement = <HTMLElement>document.querySelector("#join_heading");
-    joinHeading.onclick = onLoginJoinClick;
-
-    let createHeading: HTMLElement = <HTMLElement>document.querySelector("#create_heading");
-    createHeading.onclick = onLoginCreateClick;
-
-    let joinBtn: HTMLButtonElement = <HTMLButtonElement>document.querySelector("#join_class_btn");
-    joinBtn.onclick = onJoinClassBtnClick;
-
-    let createBtn: HTMLButtonElement = <HTMLButtonElement>document.querySelector("#new_class_btn");
-    createBtn.onclick = onCreateClassBtnClick;
-
-    let classListHeading: HTMLElement = <HTMLElement>document.querySelector("#class_list_heading");
-    classListHeading.onclick = onLoginListClick;
-
-    let instrListBtn: HTMLButtonElement = <HTMLButtonElement>document.querySelector("#instr_class_list_button");
-    instrListBtn.onclick = onInstrListClick;
-
-    let studentListBtn: HTMLButtonElement = <HTMLButtonElement>document.querySelector("#student_class_list_button");
-    studentListBtn.onclick = onStudentListClick;
-}
-
 /******************
  * Instructor Page
  *****************/
@@ -956,7 +970,7 @@ class studentClassPage {
  * main functions
  ****************/
 function setupListeners() {
-    setupLoginListeners();
+    loginPage.setupLoginListeners();
 
     studentClassPage.setup();
 }
