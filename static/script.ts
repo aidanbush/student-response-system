@@ -71,10 +71,6 @@ type joinRequest = {
  * login display listeners
  *************************/
 class loginPage {
-
-    static setup() {
-    }
-
     static onLoginJoinClick() {
         let joinDiv: HTMLElement = <HTMLElement>document.querySelector("#join");
         if (joinDiv.classList.contains("hidden")) {
@@ -109,7 +105,7 @@ class loginPage {
      *********************/
     static onJoinClassBtnClick() {
         console.log("onJoinClassBtnClick");
-        //get info if exists
+
         let classIDInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#join_class_id");
         if (classIDInput.value === "") {
             loginPage.joinClassReqFail("Error: Requires class ID");
@@ -180,15 +176,13 @@ class loginPage {
      * login failed request handlers
      *******************************/
     static joinClassReqFail(error: string) {
-        let joinDiv: HTMLElement = <HTMLElement>document.querySelector("#join_input_error");
-        joinDiv.innerHTML = error;
+        (<HTMLElement>document.querySelector("#join_input_error")).innerHTML = error;
 
         console.log("join class error: ", error);
     }
 
     static createClassReqFail(error: string) {
-        let classDiv: HTMLElement = <HTMLElement>document.querySelector("#new_input_error");
-        classDiv.innerHTML = error;
+        (<HTMLElement>document.querySelector("#new_input_error")).innerHTML = error;
 
         console.log("create class error: ", error);
     }
@@ -197,22 +191,16 @@ class loginPage {
      * login switch view functions
      *****************************/
     static switchInstructorClassView() {
-        // hide login page
         this.hideLoginPage();
 
         info.currentPage = pageEnum.instrView;
-
-        // call display view
         instructorClassPage.displayInstructorClassPage();
     }
 
     static switchStudentClassView() {
-        // hide login page
         this.hideLoginPage();
 
         info.currentPage = pageEnum.StudentView;
-
-        // call display view
         studentClassPage.displayStudentClassPage();
     }
 
@@ -220,42 +208,30 @@ class loginPage {
      * login hide views
      ******************/
     static hideLoginPage() {
-        // hide join and create divs
-        let joinDiv: HTMLElement = <HTMLElement>document.querySelector("#join");
-        joinDiv.classList.add("hidden");
+        (<HTMLElement>document.querySelector("#join")).classList.add("hidden");
 
-        let createDiv: HTMLElement = <HTMLElement>document.querySelector("#create");
-        createDiv.classList.add("hidden");
+        (<HTMLElement>document.querySelector("#create")).classList.add("hidden");
 
-        //hide login page
-        let loginDiv: HTMLElement = <HTMLElement>document.querySelector("#new");
-        loginDiv.classList.add("hidden");
+        (<HTMLElement>document.querySelector("#new")).classList.add("hidden");
     }
 
     /******************
      * login listeners
      *****************/
     static setupLoginListeners() {
-        let joinHeading: HTMLElement = <HTMLElement>document.querySelector("#join_heading");
-        joinHeading.onclick = this.onLoginJoinClick;
+        (<HTMLElement>document.querySelector("#join_heading")).onclick = this.onLoginJoinClick;
 
-        let createHeading: HTMLElement = <HTMLElement>document.querySelector("#create_heading");
-        createHeading.onclick = this.onLoginCreateClick;
+        (<HTMLElement>document.querySelector("#create_heading")).onclick = this.onLoginCreateClick;
 
-        let joinBtn: HTMLButtonElement = <HTMLButtonElement>document.querySelector("#join_class_btn");
-        joinBtn.onclick = this.onJoinClassBtnClick;
+        (<HTMLButtonElement>document.querySelector("#join_class_btn")).onclick = this.onJoinClassBtnClick;
 
-        let createBtn: HTMLButtonElement = <HTMLButtonElement>document.querySelector("#new_class_btn");
-        createBtn.onclick = this.onCreateClassBtnClick;
+        (<HTMLButtonElement>document.querySelector("#new_class_btn")).onclick = this.onCreateClassBtnClick;
 
-        let classListHeading: HTMLElement = <HTMLElement>document.querySelector("#class_list_heading");
-        classListHeading.onclick = this.onLoginListClick;
+        (<HTMLElement>document.querySelector("#class_list_heading")).onclick = this.onLoginListClick;
 
-        let instrListBtn: HTMLButtonElement = <HTMLButtonElement>document.querySelector("#instr_class_list_button");
-        instrListBtn.onclick = this.onInstrListClick;
+        (<HTMLButtonElement>document.querySelector("#instr_class_list_button")).onclick = this.onInstrListClick;
 
-        let studentListBtn: HTMLButtonElement = <HTMLButtonElement>document.querySelector("#student_class_list_button");
-        studentListBtn.onclick = this.onStudentListClick;
+        (<HTMLButtonElement>document.querySelector("#student_class_list_button")).onclick = this.onStudentListClick;
     }
 
     /**************
@@ -269,7 +245,7 @@ class loginPage {
             if (req.readyState === 4 && req.status === 200) {
                 let res: createRequest = JSON.parse(req.responseText);
                 console.log("join class req success", res);
-                // add to list of classes
+
                 info.classList.set(res.class.class_id, res.class);
                 info.currentClass = res.class.class_id;
 
@@ -783,7 +759,7 @@ class instructorClassSelection {
         info.currentClass = cid;
         info.currentPage = pageEnum.instrView;
 
-        displayInstructorClassPage();
+        instructorClassPage.displayInstructorClassPage();
     }
 }
 
