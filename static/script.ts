@@ -27,12 +27,21 @@ type Class = {
     questions: question[];
 };
 
+enum pageEnum {
+    login,
+    instrView,
+    instrList,
+    StudentView,
+    StudentList,
+};
+
 type globals = {
     name: string;
     teachIDs: string[];
     takeIDs: string[];
     classList: Map<string, Class>;
     currentClass: string;
+    currentPage: pageEnum,
 };
 
 var info: globals = {
@@ -41,6 +50,7 @@ var info: globals = {
     takeIDs: [],
     classList: new Map<string, Class>(),
     currentClass: "",
+    currentPage: pageEnum.login,
 };
 
 var username:string = "";
@@ -78,6 +88,15 @@ function onLoginCreateClick() {
         createDiv.classList.add("hidden");
     }
     return;
+}
+
+function onLoginListClick() {
+    let listDiv: HTMLElement = <HTMLElement>document.querySelector("#list_classes");
+    if (listDiv.classList.contains("hidden")) {
+        listDiv.classList.remove("hidden");
+    } else {
+        listDiv.classList.add("hidden");
+    }
 }
 
 /**********************
@@ -225,6 +244,8 @@ function switchInstructorClassView() {
     // hide login page
     hideLoginPage();
 
+    info.currentPage = pageEnum.instrView;
+
     // call display view
     displayInstructorClassPage();
 }
@@ -232,6 +253,8 @@ function switchInstructorClassView() {
 function switchStudentClassView() {
     // hide login page
     hideLoginPage();
+
+    info.currentPage = pageEnum.StudentView;
 
     // call display view
     displayStudentClassPage();
@@ -625,17 +648,6 @@ function instructorClassAnswerListeners() {
     }
 }
 
-/*****************************
- * Instructor Class Selection
- ****************************/
-function displayInstructorSelection() {
-    displayInstructorPage();
-
-    // show new div
-    let selectionDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_selection_page");
-    selectionDiv.classList.remove("hidden");
-}
-
 /*************************************
  * instructor failed request handlers
  ************************************/
@@ -657,6 +669,67 @@ function instrDeleteQuestionFail(qid: string, error: string) {
 
 function instrPublicQuestionFail(qid: string, error: string) {
     console.log("public question error: ", error);
+}
+
+/**********************************
+ * Instructor Class Selection View
+ *********************************/
+class instructorClassSelection {
+
+    classTemplateFunction: any;
+
+    constructor() {
+        // setup template
+        let template: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_list_template");
+        this.classTemplateFunction = doT.template(template.innerHTML);
+    }
+
+    show() {
+        displayInstructorPage();
+
+        // show div
+        let selectionDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_selection_page");
+        selectionDiv.classList.remove("hidden");
+    }
+
+    hide() {
+        // empty list
+        let classListDiv: HTMLElement = <HTMLElement>document.querySelector("#instr_class_list");
+        classListDiv.innerHTML = "";
+
+        let selectionDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_selection_page");
+        selectionDiv.classList.add("hidden");
+    }
+
+    fillPage() {
+        let classListDiv: HTMLElement = <HTMLElement>document.querySelector("#instr_class_list");
+
+        // render the data into the template
+        let rendered = this.classTemplateFunction(info.classList.get(info.currentClass));
+        // insert the rendered template into the DOM
+        classListDiv.innerHTML = rendered;
+
+        //setup listeners
+        this.setupListeners();
+    }
+
+    setupListeners() {
+        let classList = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrSwitchClass_']");
+        for (var i = 0; i < classList.length; ++i) {
+            classList[i].onclick = this.onSwitchClassClick;
+        }
+    }
+
+    onSwitchClassClick(event: Event) {
+        let cid: string = (<HTMLElement>event.target).id.split("_")[1];
+
+        this.hide();
+
+        info.currentClass = cid;
+        info.currentPage = pageEnum.instrView;
+
+        displayInstructorClassPage();
+    }
 }
 
 /***************
