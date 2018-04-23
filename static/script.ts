@@ -10,7 +10,7 @@ type answer = {
     answer_id: string;
     answer_text: string;
     question_id: string;
-}
+};
 
 type question = {
     question_title: string;
@@ -592,6 +592,8 @@ class instructorClassPage {
     }
 
     static onDeleteAnswerClick(event: Event) {
+        console.log("not implemented on server side");
+        return;
         let [, qid, aid]: string[] = (<HTMLElement>event.target).id.split("_");
         console.log("delete question, answer: ", qid, ", ", aid);
 
@@ -603,9 +605,9 @@ class instructorClassPage {
 
         req.onload = function () {
             if (req.readyState === 4 && req.status === 204) {
-                // remove answer
-                (<question>getQuestion(info.currentClass, qid)).answers.filter(a => a.answer_id !== aid);
-                // redraw question
+                let question: question = getQuestion(info.currentClass, qid);
+                question.answers = question.answers.filter(a => a.answer_id !== aid);
+
                 instructorClassPage.instructorViewUpdateQuestion(<question>getQuestion(info.currentClass, qid));
                 return;
             }
