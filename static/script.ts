@@ -194,14 +194,14 @@ class loginPage {
         this.hideLoginPage();
 
         info.currentPage = pageEnum.instrView;
-        instructorClassPage.displayInstructorClassPage();
+        instructorClassPage.show();
     }
 
     static switchStudentClassView() {
         this.hideLoginPage();
 
         info.currentPage = pageEnum.StudentView;
-        studentClassPage.displayStudentClassPage();
+        studentClassPage.show();
     }
 
     /*******************
@@ -219,6 +219,7 @@ class loginPage {
      * login listeners
      *****************/
     static setupLoginListeners() {
+        console.log("setupLoginListeners");
         (<HTMLElement>document.querySelector("#join_heading")).onclick = this.onLoginJoinClick;
 
         (<HTMLElement>document.querySelector("#create_heading")).onclick = this.onLoginCreateClick;
@@ -332,56 +333,58 @@ class instructorClassPage {
         this.questionTemplateFunction = doT.template(template.innerHTML);
     }
 
-    static displayInstructorClassPage() {
-        // request questions
+    static show() {
         let req: XMLHttpRequest = new XMLHttpRequest();
 
-        // response listener
         req.onload = function () {
             if (req.readyState === 4 && req.status === 200) {
-                // get add questions to class object
+                // add questions to class list and update
                 let res: question[] = JSON.parse(req.responseText);
-
-                // set questions
                 (<Class>info.classList.get(info.currentClass)).questions = res;
+
                 instructorClassPage.instructorClassDisplayQuestions();
                 return;
             }
-            instructorClassPage.displayInstructorClassFail("Error: Failed to create class");
+            instructorClassPage.requestClassError("Error: Failed to create class");
         };
 
         req.onerror = function () {
-            instructorClassPage.displayInstructorClassFail("Error: Can't connect to server");
+            instructorClassPage.requestClassError("Error: Can't connect to server");
         };
 
         req.onabort = function () {
-            instructorClassPage.displayInstructorClassFail("Error: Can't connect to server");
+            instructorClassPage.requestClassError("Error: Can't connect to server");
         };
 
         req.open("GET", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions`);
         req.send();
 
-        // display instructor page
         displayInstructorPage();
 
-        // display class page
         let classDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_page");
         classDiv.classList.remove("hidden");
     }
 
+    static hide() {
+        // clear questions
+        let classPageDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_page");
+        classPageDiv.innerHTML = "";
+
+        // hide page
+        let classDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_page");
+        classDiv.classList.add("hidden");
+    }
+
     static instructorClassDisplayQuestions() {
         let classPageDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_page");
-
         classPageDiv.innerHTML = this.questionTemplateFunction(info.classList.get(info.currentClass));
 
-        // add listeners
-        this.instructorClassListeners();
+        this.setupListeners();
     }
 
     /*********************************
      * Instructor Class View updating
      ********************************/
-    // clean up
     static instructorViewAddQuestion(question: question) {
         this.instructorClassDisplayQuestions();
     }
@@ -406,14 +409,13 @@ class instructorClassPage {
      * Instructor Class Listeners
      ****************************/
     static onCreateQuestionClick() {
-        // let nameInput: HTMLElement
         let nameInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#instr_new_question_name");
+
         if (nameInput.value === "") {
-            instructorClassPage.instrCreateQuestionFail("Error: question Requires name");
+            instructorClassPage.questionError("Error: question Requires name");
             return;
         }
 
-        // setup request object
         let reqJSON: question = {
             question_title: nameInput.value,
             question_id: "",
@@ -430,24 +432,22 @@ class instructorClassPage {
         // response listener
         req.onload = function () {
             if (req.readyState === 4 && req.status === 200) {
-                // get add questions to class object
+                // retrieve and add question
                 let res: question = JSON.parse(req.responseText);
-
-                // insert question to array
                 (<Class>info.classList.get(info.currentClass)).questions.push(res);
 
                 instructorClassPage.instructorViewAddQuestion(res);
                 return;
             }
-            instructorClassPage.instrCreateQuestionFail("Error: Failed to create question");
+            instructorClassPage.questionError("Error: Failed to create question");
         };
 
         req.onerror = function () {
-            instructorClassPage.instrCreateQuestionFail("Error: Can't connect to server");
+            instructorClassPage.questionError("Error: Can't connect to server");
         };
 
         req.onabort = function () {
-            instructorClassPage.instrCreateQuestionFail("Error: Can't connect to server");
+            instructorClassPage.questionError("Error: Can't connect to server");
         };
 
         req.open("POST", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions`);
@@ -459,7 +459,6 @@ class instructorClassPage {
      *******************************/
     static onDeleteQuestionClick(event: Event) {
         let qid: string = (<HTMLElement>event.target).id.split("_")[1]
-        // send delete request
         console.log("delete question: ", qid);
 
         let req: XMLHttpRequest = new XMLHttpRequest();
@@ -473,15 +472,15 @@ class instructorClassPage {
                 instructorClassPage.instructorViewDeleteQuestion(qid);
                 return;
             }
-            instructorClassPage.instrDeleteQuestionFail(qid, "Error: Can't connect to server");
+            instructorClassPage.deleteQuestionError(qid, "Error: Can't connect to server");
         };
 
         req.onerror = function () {
-            instructorClassPage.instrDeleteQuestionFail(qid, "Error: Can't connect to server");
+            instructorClassPage.deleteQuestionError(qid, "Error: Can't connect to server");
         };
 
         req.onabort = function () {
-            instructorClassPage.instrDeleteQuestionFail(qid, "Error: Can't connect to server");
+            instructorClassPage.deleteQuestionError(qid, "Error: Can't connect to server");
         };
 
         req.open("DELETE", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}`);
@@ -491,44 +490,39 @@ class instructorClassPage {
     static onAddAnswerClick(event: Event) {
         let qid: string = (<HTMLElement>event.target).id.split("_")[1];
 
-        // grab question text
         let answerText: string = (<HTMLInputElement>document.querySelector(`#instrQuestionAddText_${encodeURI(qid)}`)).value;
+
         if (answerText === "") {
-            instructorClassPage.instrAddAnswerFail(qid, "Error: Enter an answer");
+            instructorClassPage.addAnswerError(qid, "Error: Enter an answer");
             return;
         }
 
-        // setup request object
         let reqJSON: answer = {
             answer_id: "",
             answer_text: answerText,
             question_id: "",
         };
 
-        // make request
         let req: XMLHttpRequest = new XMLHttpRequest();
 
-        // response listener
         req.onload = function () {
             if (req.readyState === 4 && req.status === 200) {
                 let res: answer = JSON.parse(req.responseText);
+                (<question>(<Class>info.classList.get(info.currentClass)).questions.find(question => question.question_id === qid)).answers.push(res);
                 console.log("create question req success", res);
 
-                // insert answer into error
-                (<question>(<Class>info.classList.get(info.currentClass)).questions.find(question => question.question_id === qid)).answers.push(res);
-                // assume not empty
                 instructorClassPage.instructorViewAddAnswer(res);
                 return;
             }
-            instructorClassPage.instrAddAnswerFail(qid, "Error: Can't connect to server");
+            instructorClassPage.addAnswerError(qid, "Error: Can't connect to server");
         };
 
         req.onerror = function () {
-            instructorClassPage.instrAddAnswerFail(qid, "Error: Can't connect to server");
+            instructorClassPage.addAnswerError(qid, "Error: Can't connect to server");
         };
 
         req.onabort = function () {
-            instructorClassPage.instrAddAnswerFail(qid, "Error: Can't connect to server");
+            instructorClassPage.addAnswerError(qid, "Error: Can't connect to server");
         };
 
         req.open("POST", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}`);
@@ -555,15 +549,15 @@ class instructorClassPage {
                 instructorClassPage.instructorViewUpdateQuestion(question);
                 return;
             }
-            instructorClassPage.instrPublicQuestionFail(qid, "Error: Can't connect to server");
+            instructorClassPage.publicQuestionError(qid, "Error: Can't connect to server");
         };
 
         req.onerror = function () {
-            instructorClassPage.instrPublicQuestionFail(qid, "Error: Can't connect to server");
+            instructorClassPage.publicQuestionError(qid, "Error: Can't connect to server");
         };
 
         req.onabort = function () {
-            instructorClassPage.instrPublicQuestionFail(qid, "Error: Can't connect to server");
+            instructorClassPage.publicQuestionError(qid, "Error: Can't connect to server");
         };
 
         req.open("PUT", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}`);
@@ -579,18 +573,18 @@ class instructorClassPage {
         req.onload = function () {
             if (req.readyState === 4 && req.status === 200) {
                 let res: response = JSON.parse(req.responseText);
-                // TODO: draw results
+                instructorClassPage.instructorViewQuestionResults(res);
                 return;
             }
-            instructorClassPage.instrAddAnswerFail(qid, "Error: Error in retrieving results");
+            instructorClassPage.retrieveAnswersError(qid, "Error: Error in retrieving results");
         };
 
         req.onerror = function () {
-            instructorClassPage.instrAddAnswerFail(qid, "Error: Can't connect to server");
+            instructorClassPage.retrieveAnswersError(qid, "Error: Can't connect to server");
         };
 
         req.onabort = function () {
-            instructorClassPage.instrAddAnswerFail(qid, "Error: Can't connect to server");
+            instructorClassPage.retrieveAnswersError(qid, "Error: Can't connect to server");
         };
 
         req.open("GET", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}`);
@@ -615,15 +609,15 @@ class instructorClassPage {
                 instructorClassPage.instructorViewUpdateQuestion(<question>getQuestion(info.currentClass, qid));
                 return;
             }
-            instructorClassPage.instrDeleteAnswerFail(qid, aid, "Error: Can't connect to server");
+            instructorClassPage.deleteAnswerError(qid, aid, "Error: Can't connect to server");
         };
 
         req.onerror = function () {
-            instructorClassPage.instrDeleteAnswerFail(qid, aid, "Error: Can't connect to server");
+            instructorClassPage.deleteAnswerError(qid, aid, "Error: Can't connect to server");
         };
 
         req.onabort = function () {
-            instructorClassPage.instrDeleteAnswerFail(qid, aid, "Error: Can't connect to server");
+            instructorClassPage.deleteAnswerError(qid, aid, "Error: Can't connect to server");
         };
 
         req.open("DELETE", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}`);
@@ -633,10 +627,10 @@ class instructorClassPage {
     /***********************************
      * Instructor Class Listeners setup
      **********************************/
-    static instructorClassListeners() {
-        this.instructorQuestionListeners();
+    static setupListeners() {
+        this.questionListeners();
 
-        this.instructorClassAnswerListeners();
+        this.answerListeners();
 
         console.log("add create question listener");
 
@@ -644,7 +638,7 @@ class instructorClassPage {
         createQuestion.onclick = this.onCreateQuestionClick;
     }
 
-    static instructorQuestionListeners() {
+    static questionListeners() {
         let deleteQuestions = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrQuestionDel_']");
         for (var i = 0; i < deleteQuestions.length; ++i) {
             deleteQuestions[i].onclick = this.onDeleteQuestionClick;
@@ -666,7 +660,7 @@ class instructorClassPage {
         }
     }
 
-    static instructorClassAnswerListeners() {
+    static answerListeners() {
         let deleteAnswers = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='ansDel_']");
         for (var i = 0; i < deleteAnswers.length; ++i) {
             deleteAnswers[i].onclick = this.onDeleteAnswerClick;
@@ -676,28 +670,32 @@ class instructorClassPage {
     /*************************************
      * instructor failed request handlers
      ************************************/
-    static displayInstructorClassFail(error: string) {
+    static requestClassError(error: string) {
         console.log("Class error: ", error);
     }
 
-    static instrCreateQuestionFail(error: string) {
+    static questionError(error: string) {
         console.log("create question error: ", error);
     }
 
-    static instrAddAnswerFail(qid: string, error: string) {
+    static addAnswerError(qid: string, error: string) {
         console.log("add answer error: ", error);
     }
 
-    static instrDeleteQuestionFail(qid: string, error: string) {
+    static deleteQuestionError(qid: string, error: string) {
         console.log("delete question error: ", error);
     }
 
-    static instrPublicQuestionFail(qid: string, error: string) {
+    static publicQuestionError(qid: string, error: string) {
         console.log("public question error: ", error);
     }
 
-    static instrDeleteAnswerFail(qid: string, aid: string, error: string) {
+    static deleteAnswerError(qid: string, aid: string, error: string) {
         console.log("delete answer error: ", error);
+    }
+
+    static retrieveAnswersError(qid: string, error: string) {
+        console.log("retrieve answers error: ", error);
     }
 }
 
@@ -754,7 +752,7 @@ class instructorClassSelection {
         info.currentClass = cid;
         info.currentPage = pageEnum.instrView;
 
-        instructorClassPage.displayInstructorClassPage();
+        instructorClassPage.show();
     }
 }
 
@@ -792,7 +790,7 @@ class studentClassPage {
         this.questionTemplateFunc = doT.template(template.innerHTML);
     }
 
-    static displayStudentClassPage() {
+    static show() {
         this.studentClassUpdateQuestions();
 
         // display page
@@ -815,7 +813,7 @@ class studentClassPage {
             }
         }
 
-        this.studentClassListeners();
+        this.setupListeners();
     }
 
     /******************************
@@ -834,15 +832,15 @@ class studentClassPage {
                 studentClassPage.studentClassDisplayQuestions();
                 return;
             }
-            studentClassPage.displayStudentClassFail("Error: Can't connect to server");
+            studentClassPage.requestClassError("Error: Can't connect to server");
         };
 
         req.onerror = function () {
-            studentClassPage.displayStudentClassFail("Error: Can't connect to server");
+            studentClassPage.requestClassError("Error: Can't connect to server");
         };
 
         req.onabort = function () {
-            studentClassPage.displayStudentClassFail("Error: Can't connect to server");
+            studentClassPage.requestClassError("Error: Can't connect to server");
         };
 
         req.open("GET", `/api/v0/classes/${encodeURI(info.currentClass)}/questions`);
@@ -885,15 +883,15 @@ class studentClassPage {
                 studentClassPage.studentClassUpdateAnswer(qid, aid);
                 return;
             }
-            studentClassPage.studentClassSubmitAnswerFail("Error: Can't connect to server");
+            studentClassPage.submitAnswerError("Error: Can't connect to server");
         };
 
         req.onerror = function () {
-            studentClassPage.studentClassSubmitAnswerFail("Error: Can't connect to server");
+            studentClassPage.submitAnswerError("Error: Can't connect to server");
         };
 
         req.onabort = function () {
-            studentClassPage.studentClassSubmitAnswerFail("Error: Can't connect to server");
+            studentClassPage.submitAnswerError("Error: Can't connect to server");
         };
 
         // if question previously selected PUT else POST
@@ -909,7 +907,7 @@ class studentClassPage {
     /********************************
      * Student Class Listeners setup
      *******************************/
-    static studentClassListeners() {
+    static setupListeners() {
         // refresh listener
         let refreshDiv: HTMLElement = <HTMLElement>document.querySelector("#student_refresh_questions");
         refreshDiv.onclick = this.studentClassUpdateQuestions;
@@ -924,11 +922,11 @@ class studentClassPage {
     /**********************************
      * student failed request handlers
      *********************************/
-    static displayStudentClassFail(error: string) {
+    static requestClassError(error: string) {
         console.log("Class error: ", error);
     }
 
-    static studentClassSubmitAnswerFail(error: string) {
+    static submitAnswerError(error: string) {
         console.log("Submit answer error: ", error);
     }
 }
