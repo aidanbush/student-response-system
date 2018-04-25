@@ -56,6 +56,50 @@ var info: globals = {
 var username:string = "";
 
 /*************
+ * header
+ ************/
+class header {
+    static setup() {
+        this.setupListeners();
+    }
+
+    static setupListeners() {
+        (<HTMLElement>document.querySelector("#header_logout_btn")).onclick = this.onLogoutClick;
+        (<HTMLElement>document.querySelector("#header_join_create_btn")).onclick = this.onJoinCreateClick;
+        (<HTMLElement>document.querySelector("#header_student_class_list_btn")).onclick = this.onStudentListClick;
+        (<HTMLElement>document.querySelector("#header_instr_class_list_btn")).onclick = this.onInstrListClick
+    }
+
+    static onLogoutClick() {
+        console.log("onLogoutClick")
+        // goto login page and remove cookie
+    }
+
+    static onJoinCreateClick() {
+        console.log("onJoinCreateClick")
+        // goto login page
+    }
+
+    static onStudentListClick() {
+        console.log("onStudentListClick")
+        // goto student class list page
+    }
+
+    static onInstrListClick() {
+        console.log("onInstrListClick")
+        // goto instructor list page
+    }
+
+    static show() {
+        (<HTMLElement>document.querySelector("#header_buttons")).classList.remove("hidden");
+    }
+
+    static hide() {
+        (<HTMLElement>document.querySelector("#header_buttons")).classList.add("hidden");
+    }
+}
+
+/*************
  * login page
  ************/
 type createRequest = {
@@ -235,9 +279,9 @@ class loginPage {
         (<HTMLButtonElement>document.querySelector("#student_class_list_button")).onclick = this.onStudentListClick;
     }
 
-    /**************
-     * XMLRequests
-     *************/
+    /***************
+     * API Requests
+     **************/
     static joinClassRequest(classID: string, reqJSON: joinRequest) {
         let req: XMLHttpRequest = new XMLHttpRequest();
 
@@ -363,6 +407,8 @@ class instructorClassPage {
 
         let classDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_page");
         classDiv.classList.remove("hidden");
+
+        header.show();
     }
 
     static hide() {
@@ -373,6 +419,8 @@ class instructorClassPage {
         // hide page
         let classDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_page");
         classDiv.classList.add("hidden");
+
+        header.hide();
     }
 
     static instructorClassDisplayQuestions() {
@@ -594,6 +642,7 @@ class instructorClassPage {
     static onDeleteAnswerClick(event: Event) {
         console.log("not implemented on server side");
         return;
+        // TODO: implement server side
         let [, qid, aid]: string[] = (<HTMLElement>event.target).id.split("_");
         console.log("delete question, answer: ", qid, ", ", aid);
 
@@ -801,6 +850,15 @@ class studentClassPage {
         // display class page
         let classDiv: HTMLElement = <HTMLElement>document.querySelector("#student_class_page");
         classDiv.classList.remove("hidden");
+
+        header.show();
+    }
+
+    static hide() {
+        let classDiv: HTMLElement = <HTMLElement>document.querySelector("#student_class_page");
+        classDiv.classList.add("hidden");
+
+        header.hide();
     }
 
     static studentClassDisplayQuestions() {
@@ -937,6 +995,7 @@ class studentClassPage {
  * main functions
  ****************/
 function setupListeners() {
+    header.setup();
     loginPage.setupLoginListeners();
 
     studentClassPage.setup();
