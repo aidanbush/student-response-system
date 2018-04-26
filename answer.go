@@ -317,6 +317,69 @@ func changeAnswer(w http.ResponseWriter, r *http.Request) (answer, error) {
 	return answer, nil
 }
 
+// delete answer
+func deleteAnswer(w http.ResponseWriter, r *http.Request) error {
+	vars := mux.Vars(r)
+
+	// get classID
+	classID, ok := vars["classID"]
+	if !ok {
+		fmt.Println("deleteAnswer: can't find classID")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return fmt.Errorf("deleteAnswer: unable to grab classID")
+	}
+
+	// get questionID
+	questionID, ok := vars["questionID"]
+	if !ok {
+		fmt.Println("deleteAnswer: can't find questionID")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return fmt.Errorf("deleteAnswer: unable to grab questionID")
+	}
+
+	// get answerID
+	answerID, ok := vars["answerID"]
+	if !ok {
+		fmt.Println("deleteAnswer: can't find answerID")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return fmt.Errorf("deleteAnswer: unable to grab answerID")
+	}
+
+	// get UAT
+	UAT, err := getUAT(w, r)
+	if err != nil {
+		if err != errNoUAT {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+		}
+		fmt.Println("deleteAnswer: getUAT:", err)
+		return err
+	}
+
+	// check if teach class and question and answer are in it
+	ok, err = ownAnswer(UAT, classID, questionID, answerID)
+	if err != nil {
+		fmt.Println("deleteAnswer: ownAnswer:", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return err
+	} else if !ok {
+		fmt.Println("deleteAnswer: UAT:", UAT, "does not own answer:", answerID, "from question:", questionID, "and class:", classID)
+		w.WriteHeader(http.StatusBadRequest)
+		return fmt.Errorf("deleteAnswer: doesn't own answer")
+	}
+
+	// delete answer
+	err = deleteAnswerDB(answerID)
+	if err != nil {
+		fmt.Println("deleteAnswer: deleteAnswerDB:", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return err
+	}
+
+	return nil
+}
+
 func getResponses(questionID string) ([]response, error) {
 	q := `select aid, count(*) from answered where qid = $1 group by aid`
 
@@ -367,6 +430,24 @@ func updateAnswerDB(answerID, questionID, UAT string) error {
 	return nil
 }
 
+func deleteAnswerDB(answerID string) error {
+	q := `delete from answered where aid = $1`
+
+	_, err := db.Exec(q, answerID)
+	if err != nil {
+		return err
+	}
+
+	q = `delete from answer where aid = $1`
+
+	_, err = db.Exec(q, answerID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func ownPublicQuestion(UAT, classID, questionID string) (bool, error) {
 	q := `select * from taking as T, question as Q
         where T.pid = $1 and T.cid = $2 and Q.qid = $3 and T.cid = Q.cid and Q.public = true
@@ -382,6 +463,23 @@ func ownPublicQuestion(UAT, classID, questionID string) (bool, error) {
 		return false, err
 	}
 	return count != 0, err
+}
+
+func ownAnswer(UAT, classID, questionID, answerID string) (bool, error) {
+	q := `select * from teaches as T, question as Q, answer as A
+		where T.pid = $1 and T.cid = $2 and Q.qid = $3 and A.aid = $4 and T.cid = Q.cid and Q.qid = A.qid
+		limit 1`
+
+	res, err := db.Exec(q, UAT, classID, questionID, answerID)
+	if err != nil {
+		return false, nil
+	}
+
+	count, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return count != 0, nil
 }
 
 func validAnswer(answerID, questionID string) (bool, error) {

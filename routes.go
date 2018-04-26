@@ -139,6 +139,14 @@ func handleGetQuesionAnswers(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s\n", string(jsonOut))
 }
 
+func handleDeleteAnswer(w http.ResponseWriter, r *http.Request) {
+	err := deleteAnswer(w, r)
+	if err != nil {
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 /* Student class interaction */
 
 func handleGetQuestions(w http.ResponseWriter, r *http.Request) {
