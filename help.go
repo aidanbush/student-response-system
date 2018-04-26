@@ -63,9 +63,32 @@ func createUAT(person *person, w http.ResponseWriter) error {
 		return err
 	}
 
-	cookie := &http.Cookie{Name: "UAT", Value: person.Pid, Expires: time.Now().AddDate(0, 0, 1)}
+	cookie := &http.Cookie{
+		Name:    "UAT",
+		Value:   person.Pid,
+		Path:    "/",
+		Expires: time.Now().AddDate(0, 0, 1),
+	}
 	http.SetCookie(w, cookie)
 	return nil
+}
+
+func validUAT(UAT string) bool {
+	q := `Select * from person where pid = $1`
+	res, err := db.Exec(q, UAT)
+	if err != nil {
+		return false
+	}
+	count, err := res.RowsAffected()
+	if err != nil {
+		return false
+	}
+	return count != 0
+}
+
+// refactor out
+func validCookie(cookie *http.Cookie) bool {
+	return validUAT(cookie.Value)
 }
 
 func getNameFromClassReq(requestClass *classReq, r *http.Request) error {

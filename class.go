@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -24,19 +23,6 @@ type class struct {
 
 func validClassReq(request classReq) bool {
 	return strings.Compare(request.Class.ClassName, "") != 0
-}
-
-func validCookie(cookie *http.Cookie) bool {
-	q := `Select * from person where pid = $1`
-	res, err := db.Exec(q, cookie.Value)
-	if err != nil {
-		return false
-	}
-	count, err := res.RowsAffected()
-	if err != nil {
-		return false
-	}
-	return count != 0
 }
 
 func createNewClass(w http.ResponseWriter, r *http.Request) (classReq, error) {
@@ -59,32 +45,29 @@ func createNewClass(w http.ResponseWriter, r *http.Request) (classReq, error) {
 	fmt.Println("request create class\nclass name: ", requestClass.Class.ClassName, "\nperson name: ", requestClass.Person.Name)
 
 	// check if cookie exists for person else create one
-	cookies, err := r.Cookie("UAT")
+	UAT, err := getUAT(w, r)
 	if err != nil {
-		if err != http.ErrNoCookie {
-			fmt.Println("cookie: ", err)
+		if err == errNoUAT {
+			// new person
+			err = createUAT(&requestClass.Person, w)
+			if err != nil {
+				fmt.Println("createNewPerson: ", err)
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				return requestClass, err
+			}
+		} else {
 			w.WriteHeader(http.StatusBadRequest)
 			return requestClass, err
 		}
-		// create new person
-		err = createNewPerson(&requestClass.Person)
-		if err != nil {
-			fmt.Println("createNewPerson: ", err)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return requestClass, err
-		}
-		//create cookie
-		cookie := &http.Cookie{Name: "UAT", Value: requestClass.Person.Pid, Expires: time.Now().AddDate(0, 0, 1)}
-		http.SetCookie(w, cookie)
 	} else {
+		// already exists
 		// validate cookie
-		if !validCookie(cookies) {
-			fmt.Println("class: invalid cookie")
+		if !validUAT(UAT) {
+			fmt.Println("createNewClass: invalid cookie")
 			w.WriteHeader(http.StatusBadRequest)
-			return requestClass, fmt.Errorf("class: invalid cookie")
+			return requestClass, fmt.Errorf("createNewClass: invalid cookie")
 		}
-		//set pid
-		requestClass.Person.Pid = cookies.Value
+		requestClass.Person.Pid = UAT
 	}
 
 	// add class to db
