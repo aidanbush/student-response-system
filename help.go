@@ -16,6 +16,7 @@ import (
 const md5DataLen = 15
 
 var errNoUAT = errors.New("no UAT cookie found")
+var errInvalidUAT = errors.New("UAT not Valid")
 
 func pqslUniqueErr(err error) bool {
 	if pErr, ok := err.(*pq.Error); ok {
@@ -49,7 +50,7 @@ func getUAT(w http.ResponseWriter, r *http.Request) (string, error) {
 		// validate cookie
 		if !validCookie(cookies) {
 			fmt.Println("class: invalid cookie")
-			return "", fmt.Errorf("class: invalid cookie")
+			return "", errInvalidUAT
 		}
 	}
 	return cookies.Value, nil
@@ -73,6 +74,7 @@ func createUAT(person *person, w http.ResponseWriter) error {
 	return nil
 }
 
+// refactor to return error
 func validUAT(UAT string) bool {
 	q := `Select * from person where pid = $1`
 	res, err := db.Exec(q, UAT)

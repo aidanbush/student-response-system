@@ -38,17 +38,17 @@ func main() {
 	r.HandleFunc("/api/v0/classes/{classID}", handleJoinClass).Methods("POST")
 
 	// instructor class management
+	r.HandleFunc("/api/v0/instructors/classes", handleGetInstructorClasses).Methods("GET")
 	r.HandleFunc("/api/v0/instructors/classes/{classID}/questions", handleInstrGetQuestions).Methods("GET")
 	r.HandleFunc("/api/v0/instructors/classes/{classID}/questions", handleCreateQuesion).Methods("POST")
-	// add all question responses
 	r.HandleFunc("/api/v0/instructors/classes/{classID}/questions/{questionID}", handleDeleteQuesion).Methods("DELETE")
 	r.HandleFunc("/api/v0/instructors/classes/{classID}/questions/{questionID}", handleAddAnswer).Methods("POST")
 	r.HandleFunc("/api/v0/instructors/classes/{classID}/questions/{questionID}", handleMakeQuesionPublic).Methods("PUT")
 	r.HandleFunc("/api/v0/instructors/classes/{classID}/questions/{questionID}", handleGetQuesionAnswers).Methods("GET")
-	// answer routes
 	r.HandleFunc("/api/v0/instructors/classes/{classID}/questions/{questionID}/answers/{answerID}", handleDeleteAnswer).Methods("DELETE")
 
 	// student class interaction
+	//r.HandleFunc("/api/v0/classes", nil).Methods("GET")
 	r.HandleFunc("/api/v0/classes/{classID}/questions", handleGetQuestions).Methods("GET")
 	r.HandleFunc("/api/v0/classes/{classID}/questions/{questionID}", handleGetAnswers).Methods("GET")
 	r.HandleFunc("/api/v0/classes/{classID}/questions/{questionID}", handleSubmitAnswer).Methods("POST")

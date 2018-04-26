@@ -47,6 +47,22 @@ func handleJoinClass(w http.ResponseWriter, r *http.Request) {
 
 /* Instructor class management */
 
+func handleGetInstructorClasses(w http.ResponseWriter, r *http.Request) {
+	classList, err := getInstructorClasses(w, r)
+	if err != nil {
+		return
+	}
+
+	jsonOut, err := json.Marshal(classList)
+	if err != nil {
+		fmt.Println("json marshal: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "%s\n", string(jsonOut))
+}
+
 func handleInstrGetQuestions(w http.ResponseWriter, r *http.Request) {
 	questions, err := instrGetQuestions(w, r)
 	if err != nil {

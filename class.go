@@ -230,6 +230,28 @@ func joinClass(w http.ResponseWriter, r *http.Request) (classReq, error) {
 	return requestClass, nil
 }
 
+func getInstructorClasses(w http.ResponseWriter, r *http.Request) ([]class, error) {
+	UAT, err := getUAT(w, r)
+	if err != nil {
+		fmt.Println("getInstructorClasses:", err)
+		if err == errNoUAT || err == errInvalidUAT {
+			w.WriteHeader(http.StatusBadRequest)
+		} else {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+		return []class{}, err
+	}
+
+	classList, err := getClassListDB(UAT)
+	if err != nil {
+		fmt.Println("getInstructorClasses:", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return classList, err
+	}
+
+	return classList, nil
+}
+
 func classExists(classID string) (bool, error) {
 	q := `select * from class as C where C.cid = $1`
 
@@ -263,4 +285,28 @@ func fillClass(class *class) error {
 	}
 
 	return nil
+}
+
+func getClassListDB(UAT string) ([]class, error) {
+	q := `select C.cid, C.name from class as C, teaches as T
+		where T.pid = $1 and T.cid = C.cid`
+	classList := []class{}
+
+	rows, err := db.Queryx(q, UAT)
+	if err != nil {
+		return classList, err
+	}
+
+	for rows.Next() {
+		class := class{}
+
+		err = rows.StructScan(&class)
+		if err != nil {
+			return classList, err
+		}
+
+		classList = append(classList, class)
+	}
+
+	return classList, nil
 }
