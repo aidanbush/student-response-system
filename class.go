@@ -242,9 +242,31 @@ func getInstructorClasses(w http.ResponseWriter, r *http.Request) ([]class, erro
 		return []class{}, err
 	}
 
-	classList, err := getClassListDB(UAT)
+	classList, err := getInstructorClassListDB(UAT)
 	if err != nil {
 		fmt.Println("getInstructorClasses:", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return classList, err
+	}
+
+	return classList, nil
+}
+
+func getStudentClasses(w http.ResponseWriter, r *http.Request) ([]class, error) {
+	UAT, err := getUAT(w, r)
+	if err != nil {
+		fmt.Println("getStudentClasses:", err)
+		if err == errNoUAT || err == errInvalidUAT {
+			w.WriteHeader(http.StatusBadRequest)
+		} else {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+		return []class{}, err
+	}
+
+	classList, err := getStudentClassListBD(UAT)
+	if err != nil {
+		fmt.Println("getStudentClasses:", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return classList, err
 	}
@@ -287,8 +309,32 @@ func fillClass(class *class) error {
 	return nil
 }
 
-func getClassListDB(UAT string) ([]class, error) {
+func getInstructorClassListDB(UAT string) ([]class, error) {
 	q := `select C.cid, C.name from class as C, teaches as T
+		where T.pid = $1 and T.cid = C.cid`
+	classList := []class{}
+
+	rows, err := db.Queryx(q, UAT)
+	if err != nil {
+		return classList, err
+	}
+
+	for rows.Next() {
+		class := class{}
+
+		err = rows.StructScan(&class)
+		if err != nil {
+			return classList, err
+		}
+
+		classList = append(classList, class)
+	}
+
+	return classList, nil
+}
+
+func getStudentClassListBD(UAT string) ([]class, error) {
+	q := `select C.cid, C.name from class as C, taking as T
 		where T.pid = $1 and T.cid = C.cid`
 	classList := []class{}
 

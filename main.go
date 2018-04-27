@@ -48,7 +48,7 @@ func main() {
 	r.HandleFunc("/api/v0/instructors/classes/{classID}/questions/{questionID}/answers/{answerID}", handleDeleteAnswer).Methods("DELETE")
 
 	// student class interaction
-	//r.HandleFunc("/api/v0/classes", nil).Methods("GET")
+	r.HandleFunc("/api/v0/classes", handleStudentGetClasses).Methods("GET")
 	r.HandleFunc("/api/v0/classes/{classID}/questions", handleGetQuestions).Methods("GET")
 	r.HandleFunc("/api/v0/classes/{classID}/questions/{questionID}", handleGetAnswers).Methods("GET")
 	r.HandleFunc("/api/v0/classes/{classID}/questions/{questionID}", handleSubmitAnswer).Methods("POST")

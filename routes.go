@@ -165,6 +165,22 @@ func handleDeleteAnswer(w http.ResponseWriter, r *http.Request) {
 
 /* Student class interaction */
 
+func handleStudentGetClasses(w http.ResponseWriter, r *http.Request) {
+	classList, err := getStudentClasses(w, r)
+	if err != nil {
+		return
+	}
+
+	jsonOut, err := json.Marshal(classList)
+	if err != nil {
+		fmt.Println("json marshal: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "%s\n", string(jsonOut))
+}
+
 func handleGetQuestions(w http.ResponseWriter, r *http.Request) {
 	questions, err := getQuestions(w, r)
 	if err != nil {
