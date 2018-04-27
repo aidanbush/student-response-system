@@ -48,25 +48,22 @@ func createNewClass(w http.ResponseWriter, r *http.Request) (classReq, error) {
 	UAT, err := getUAT(w, r)
 	if err != nil {
 		if err == errNoUAT {
-			// new person
 			err = createUAT(&requestClass.Person, w)
 			if err != nil {
 				fmt.Println("createNewPerson: ", err)
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 				return requestClass, err
 			}
-		} else {
+		} else if err == errInvalidUAT {
+			fmt.Println("createNewClass: getUAT", err)
 			w.WriteHeader(http.StatusBadRequest)
+			return requestClass, err
+		} else {
+			fmt.Println("createNewClass: getUAT", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return requestClass, err
 		}
 	} else {
-		// already exists
-		// validate cookie
-		if !validUAT(UAT) {
-			fmt.Println("createNewClass: invalid cookie")
-			w.WriteHeader(http.StatusBadRequest)
-			return requestClass, fmt.Errorf("createNewClass: invalid cookie")
-		}
 		requestClass.Person.Pid = UAT
 	}
 

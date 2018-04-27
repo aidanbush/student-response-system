@@ -48,8 +48,14 @@ func getUAT(w http.ResponseWriter, r *http.Request) (string, error) {
 		return "", errNoUAT
 	} else {
 		// validate cookie
-		if !validCookie(cookies) {
-			fmt.Println("class: invalid cookie")
+		ok, err := validCookie(cookies)
+		if err != nil {
+			fmt.Println("getUAT:", err)
+			return "", err
+		}
+
+		if !ok {
+			fmt.Println("getUAT:", errInvalidUAT)
 			return "", errInvalidUAT
 		}
 	}
@@ -75,21 +81,24 @@ func createUAT(person *person, w http.ResponseWriter) error {
 }
 
 // refactor to return error
-func validUAT(UAT string) bool {
+func validUAT(UAT string) (bool, error) {
 	q := `Select * from person where pid = $1`
+
 	res, err := db.Exec(q, UAT)
 	if err != nil {
-		return false
+		return false, err
 	}
+
 	count, err := res.RowsAffected()
 	if err != nil {
-		return false
+		return false, err
 	}
-	return count != 0
+
+	return count != 0, nil
 }
 
 // refactor out
-func validCookie(cookie *http.Cookie) bool {
+func validCookie(cookie *http.Cookie) (bool, error) {
 	return validUAT(cookie.Value)
 }
 
