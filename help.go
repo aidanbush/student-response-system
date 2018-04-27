@@ -46,7 +46,7 @@ func getUAT(w http.ResponseWriter, r *http.Request) (string, error) {
 
 		return "", errNoUAT
 	} else {
-		ok, err := validCookie(cookies)
+		ok, err := validUAT(cookies.Value)
 		if err != nil {
 			fmt.Println("getUAT:", err)
 			return "", err
@@ -92,11 +92,6 @@ func validUAT(UAT string) (bool, error) {
 	}
 
 	return count != 0, nil
-}
-
-// refactor out
-func validCookie(cookie *http.Cookie) (bool, error) {
-	return validUAT(cookie.Value)
 }
 
 func getNameFromClassReq(requestClass *classReq, r *http.Request) error {
