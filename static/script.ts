@@ -65,6 +65,14 @@ class main {
         studentClassPage.setup();
         instructorClassPage.setup();
     }
+
+    static getQuestion(cid: string, qid: string): question | undefined {
+        let Class: Class | undefined = main.classList.get(cid);
+        if (Class === undefined) {
+            return undefined;
+        }
+        return Class.questions.find(question => question.question_id === qid);
+    }
 }
 
 /*************
@@ -659,10 +667,10 @@ class instructorClassPage {
 
         req.onload = function () {
             if (req.readyState === 4 && req.status === 204) {
-                let question: question = getQuestion(main.currentClass, qid);
+                let question: question = main.getQuestion(main.currentClass, qid);
                 question.answers = question.answers.filter(a => a.answer_id !== aid);
 
-                instructorClassPage.instructorViewUpdateQuestion(<question>getQuestion(main.currentClass, qid));
+                instructorClassPage.instructorViewUpdateQuestion(<question>main.getQuestion(main.currentClass, qid));
                 return;
             }
             instructorClassPage.deleteAnswerError(qid, aid, "Error: Can't connect to server");
@@ -913,7 +921,7 @@ class studentClassPage {
     }
 
     static studentClassUpdateAnswer(qid: string, aid: string) {
-        let question: question = (<question>getQuestion(main.currentClass, qid));
+        let question: question = (<question>main.getQuestion(main.currentClass, qid));
 
         let currentAnswer: string = question.selected_answer;
         if (currentAnswer !== "") {
@@ -960,7 +968,7 @@ class studentClassPage {
         };
 
         // if question previously selected PUT else POST
-        if ((<question>getQuestion(main.currentClass, qid)).selected_answer === "") {
+        if ((<question>main.getQuestion(main.currentClass, qid)).selected_answer === "") {
             req.open("POST", `/api/v0/classes/${encodeURI(main.currentClass)}/questions/${encodeURI(qid)}`);
         } else {
             req.open("PUT", `/api/v0/classes/${encodeURI(main.currentClass)}/questions/${encodeURI(qid)}`);
@@ -994,28 +1002,6 @@ class studentClassPage {
     static submitAnswerError(error: string) {
         console.log("Submit answer error: ", error);
     }
-}
-
-/*****************
- * main functions
- ****************/
-function setupListeners() {
-    header.setup();
-    loginPage.setupLoginListeners();
-
-    studentClassPage.setup();
-    instructorClassPage.setup();
-}
-
-/*******************
- * Helper functions
- ******************/
-function getQuestion(cid: string, qid: string): question | undefined {
-    let Class: Class | undefined = main.classList.get(cid);
-    if (Class === undefined) {
-        return undefined;
-    }
-    return Class.questions.find(question => question.question_id === qid);
 }
 
 main.setup();
