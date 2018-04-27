@@ -35,41 +35,29 @@ enum pageEnum {
     StudentList,
 };
 
-type globals = {
-    name: string;
-    teachIDs: string[];
-    takeIDs: string[];
-    classList: Map<string, Class>;
-    currentClass: string;
-    currentPage: pageEnum,
-};
-
-var info: globals = {
-    name: "",
-    teachIDs: [],
-    takeIDs: [],
-    classList: new Map<string, Class>(),
-    currentClass: "",
-    currentPage: pageEnum.login,
-};
-
 /*************
  * Main class
  ************/
 class main {
 
     static username: string;
-    //static teachIDs: string[];
-    //static takeIDs: string[];
-    //static classList: Map<string, Class>;
-    //static currentClass: string;
-    //static currentPage: pageEnum;
+    static teachIDs: string[];
+    static takeIDs: string[];
+    static classList: Map<string, Class>;
+    static currentClass: string;
+    static currentPage: pageEnum;
 
     static setup() {
         this.setupListeners();
 
         this.username = "";
+        this.teachIDs = [];
+        this.takeIDs = [];
+        this.classList = new Map<string, Class>();
+        this.currentClass = "";
+        this.currentPage = pageEnum.login;
     }
+
     static setupListeners() {
         header.setup();
         loginPage.setupLoginListeners();
@@ -183,17 +171,17 @@ class loginPage {
         let classID = classIDInput.value;
 
         let nameInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#student_name");
-        if (nameInput.value === "" && info.name === "") {
+        if (nameInput.value === "" && main.username === "") {
             loginPage.joinClassReqFail("Error: Requires your name");
             return;
-        } else if (info.name === "") {
-            info.name = nameInput.value;
+        } else if (main.username === "") {
+            main.username = nameInput.value;
         }
 
         // create request json object
         let reqJSON: joinRequest = {
             person: {
-                name: info.name,
+                name: main.username,
             },
         };
 
@@ -210,17 +198,17 @@ class loginPage {
         }
 
         let nameInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#instructor_name");
-        if (nameInput.value === "" && info.name === "") {
+        if (nameInput.value === "" && main.username === "") {
             loginPage.createClassReqFail("Error: Requires your name");
             return;
-        } else if (info.name === "") {
-            info.name = nameInput.value;
+        } else if (main.username === "") {
+            main.username = nameInput.value;
         }
 
         // create request json object
         let reqJSON: createRequest = {
             person: {
-                name: info.name,
+                name: main.username,
             },
             class: {
                 class_name: classNameInput.value,
@@ -261,14 +249,14 @@ class loginPage {
     static switchInstructorClassView() {
         this.hideLoginPage();
 
-        info.currentPage = pageEnum.instrView;
+        main.currentPage = pageEnum.instrView;
         instructorClassPage.show();
     }
 
     static switchStudentClassView() {
         this.hideLoginPage();
 
-        info.currentPage = pageEnum.StudentView;
+        main.currentPage = pageEnum.StudentView;
         studentClassPage.show();
     }
 
@@ -315,8 +303,8 @@ class loginPage {
                 let res: createRequest = JSON.parse(req.responseText);
                 console.log("join class req success", res);
 
-                info.classList.set(res.class.class_id, res.class);
-                info.currentClass = res.class.class_id;
+                main.classList.set(res.class.class_id, res.class);
+                main.currentClass = res.class.class_id;
 
                 loginPage.switchStudentClassView();
                 return;
@@ -345,8 +333,8 @@ class loginPage {
                 let res: createRequest = JSON.parse(req.responseText);
 
                 // add to list of classes
-                info.classList.set(res.class.class_id, res.class);
-                info.currentClass = res.class.class_id;
+                main.classList.set(res.class.class_id, res.class);
+                main.currentClass = res.class.class_id;
 
                 loginPage.switchInstructorClassView();
                 return;
@@ -382,7 +370,7 @@ type response = {
 function displayInstructorPage() {
     // TODO set name
     let instructorNameDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_display_name");
-    instructorNameDiv.innerHTML = `Hello ${info.name}`;
+    instructorNameDiv.innerHTML = `Hello ${main.username}`;
 
     let instructorDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_page");
     instructorDiv.classList.remove("hidden");
@@ -408,7 +396,7 @@ class instructorClassPage {
             if (req.readyState === 4 && req.status === 200) {
                 // add questions to class list and update
                 let res: question[] = JSON.parse(req.responseText);
-                (<Class>info.classList.get(info.currentClass)).questions = res;
+                (<Class>main.classList.get(main.currentClass)).questions = res;
 
                 instructorClassPage.instructorClassDisplayQuestions();
                 return;
@@ -424,7 +412,7 @@ class instructorClassPage {
             instructorClassPage.requestClassError("Error: Can't connect to server");
         };
 
-        req.open("GET", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions`);
+        req.open("GET", `/api/v0/instructors/classes/${encodeURI(main.currentClass)}/questions`);
         req.send();
 
         displayInstructorPage();
@@ -449,7 +437,7 @@ class instructorClassPage {
 
     static instructorClassDisplayQuestions() {
         let classPageDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_page");
-        classPageDiv.innerHTML = this.questionTemplateFunction(info.classList.get(info.currentClass));
+        classPageDiv.innerHTML = this.questionTemplateFunction(main.classList.get(main.currentClass));
 
         this.setupListeners();
     }
@@ -492,7 +480,7 @@ class instructorClassPage {
             question_title: nameInput.value,
             question_id: "",
             public: false,
-            class_id: info.currentClass,
+            class_id: main.currentClass,
             answers: [],
             selected_answer: "",
         };
@@ -506,7 +494,7 @@ class instructorClassPage {
             if (req.readyState === 4 && req.status === 200) {
                 // retrieve and add question
                 let res: question = JSON.parse(req.responseText);
-                (<Class>info.classList.get(info.currentClass)).questions.push(res);
+                (<Class>main.classList.get(main.currentClass)).questions.push(res);
 
                 instructorClassPage.instructorViewAddQuestion(res);
                 return;
@@ -522,7 +510,7 @@ class instructorClassPage {
             instructorClassPage.questionError("Error: Can't connect to server");
         };
 
-        req.open("POST", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions`);
+        req.open("POST", `/api/v0/instructors/classes/${encodeURI(main.currentClass)}/questions`);
         req.send(JSON.stringify(reqJSON));
     }
 
@@ -538,7 +526,7 @@ class instructorClassPage {
         req.onload = function () {
             if (req.readyState === 4 && req.status === 204) {
                 // delete local copy
-                let Class: Class = <Class>info.classList.get(info.currentClass);
+                let Class: Class = <Class>main.classList.get(main.currentClass);
                 Class.questions = Class.questions.filter(question => question.question_id !== qid);
                 // redraw
                 instructorClassPage.instructorViewDeleteQuestion(qid);
@@ -555,7 +543,7 @@ class instructorClassPage {
             instructorClassPage.deleteQuestionError(qid, "Error: Can't connect to server");
         };
 
-        req.open("DELETE", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}`);
+        req.open("DELETE", `/api/v0/instructors/classes/${encodeURI(main.currentClass)}/questions/${encodeURI(qid)}`);
         req.send();
     }
 
@@ -580,7 +568,7 @@ class instructorClassPage {
         req.onload = function () {
             if (req.readyState === 4 && req.status === 200) {
                 let res: answer = JSON.parse(req.responseText);
-                (<question>(<Class>info.classList.get(info.currentClass)).questions.find(question => question.question_id === qid)).answers.push(res);
+                (<question>(<Class>main.classList.get(main.currentClass)).questions.find(question => question.question_id === qid)).answers.push(res);
                 console.log("create question req success", res);
 
                 instructorClassPage.instructorViewAddAnswer(res);
@@ -597,7 +585,7 @@ class instructorClassPage {
             instructorClassPage.addAnswerError(qid, "Error: Can't connect to server");
         };
 
-        req.open("POST", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}`);
+        req.open("POST", `/api/v0/instructors/classes/${encodeURI(main.currentClass)}/questions/${encodeURI(qid)}`);
         req.send(JSON.stringify(reqJSON));
     }
 
@@ -607,7 +595,7 @@ class instructorClassPage {
         console.log("make public question: ", qid);
 
         // setup request object
-        let reqJSON: question = <question>(<Class>info.classList.get(info.currentClass)).questions.find(question => question.question_id === qid);
+        let reqJSON: question = <question>(<Class>main.classList.get(main.currentClass)).questions.find(question => question.question_id === qid);
         reqJSON.public = true;
 
         let req: XMLHttpRequest = new XMLHttpRequest();
@@ -615,7 +603,7 @@ class instructorClassPage {
         req.onload = function () {
             if (req.readyState === 4 && req.status === 200) {
                 // update question
-                let question: question = <question>(<Class>info.classList.get(info.currentClass)).questions.find(question => question.question_id === qid);
+                let question: question = <question>(<Class>main.classList.get(main.currentClass)).questions.find(question => question.question_id === qid);
                 question.public = true;
 
                 instructorClassPage.instructorViewUpdateQuestion(question);
@@ -632,7 +620,7 @@ class instructorClassPage {
             instructorClassPage.publicQuestionError(qid, "Error: Can't connect to server");
         };
 
-        req.open("PUT", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}`);
+        req.open("PUT", `/api/v0/instructors/classes/${encodeURI(main.currentClass)}/questions/${encodeURI(qid)}`);
         req.send(JSON.stringify(reqJSON));
     }
 
@@ -659,7 +647,7 @@ class instructorClassPage {
             instructorClassPage.retrieveAnswersError(qid, "Error: Can't connect to server");
         };
 
-        req.open("GET", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}`);
+        req.open("GET", `/api/v0/instructors/classes/${encodeURI(main.currentClass)}/questions/${encodeURI(qid)}`);
         req.send();
     }
 
@@ -671,10 +659,10 @@ class instructorClassPage {
 
         req.onload = function () {
             if (req.readyState === 4 && req.status === 204) {
-                let question: question = getQuestion(info.currentClass, qid);
+                let question: question = getQuestion(main.currentClass, qid);
                 question.answers = question.answers.filter(a => a.answer_id !== aid);
 
-                instructorClassPage.instructorViewUpdateQuestion(<question>getQuestion(info.currentClass, qid));
+                instructorClassPage.instructorViewUpdateQuestion(<question>getQuestion(main.currentClass, qid));
                 return;
             }
             instructorClassPage.deleteAnswerError(qid, aid, "Error: Can't connect to server");
@@ -688,7 +676,7 @@ class instructorClassPage {
             instructorClassPage.deleteAnswerError(qid, aid, "Error: Can't connect to server");
         };
 
-        req.open("DELETE", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}/answers/${encodeURI(aid)}`);
+        req.open("DELETE", `/api/v0/instructors/classes/${encodeURI(main.currentClass)}/questions/${encodeURI(qid)}/answers/${encodeURI(aid)}`);
         req.send();
     }
 
@@ -800,7 +788,7 @@ class instructorClassSelection {
     static fillPage() {
         let classListDiv: HTMLElement = <HTMLElement>document.querySelector("#instr_class_list");
 
-        classListDiv.innerHTML = this.classTemplateFunction(info.classList.get(info.currentClass));
+        classListDiv.innerHTML = this.classTemplateFunction(main.classList.get(main.currentClass));
 
         this.setupListeners();
     }
@@ -817,8 +805,8 @@ class instructorClassSelection {
 
         this.hide();
 
-        info.currentClass = cid;
-        info.currentPage = pageEnum.instrView;
+        main.currentClass = cid;
+        main.currentPage = pageEnum.instrView;
 
         instructorClassPage.show();
     }
@@ -837,7 +825,7 @@ type answerRequest = {
 function displayStudentPage() {
     // TODO set name
     let instructorNameDiv: HTMLElement = <HTMLElement>document.querySelector("#student_display_name");
-    instructorNameDiv.innerHTML = `Hello ${info.name}`;
+    instructorNameDiv.innerHTML = `Hello ${main.username}`;
 
     // show page
     let classDiv: HTMLElement = <HTMLElement>document.querySelector("#student_page");
@@ -881,10 +869,10 @@ class studentClassPage {
     static studentClassDisplayQuestions() {
         let classPageDiv: HTMLElement = <HTMLElement>document.querySelector("#student_class_page");
 
-        classPageDiv.innerHTML = this.questionTemplateFunc(info.classList.get(info.currentClass));
+        classPageDiv.innerHTML = this.questionTemplateFunc(main.classList.get(main.currentClass));
 
         // show selected answers
-        for (let q of (<Class>info.classList.get(info.currentClass)).questions) {
+        for (let q of (<Class>main.classList.get(main.currentClass)).questions) {
             if (q.selected_answer != "") {
                 this.StudentClassViewSelectAnswer(q.question_id, q.selected_answer);
             }
@@ -905,7 +893,7 @@ class studentClassPage {
                 let res: question[] = JSON.parse(req.responseText);
 
                 // set questions
-                (<Class>info.classList.get(info.currentClass)).questions = res;
+                (<Class>main.classList.get(main.currentClass)).questions = res;
                 studentClassPage.studentClassDisplayQuestions();
                 return;
             }
@@ -920,12 +908,12 @@ class studentClassPage {
             studentClassPage.requestClassError("Error: Can't connect to server");
         };
 
-        req.open("GET", `/api/v0/classes/${encodeURI(info.currentClass)}/questions`);
+        req.open("GET", `/api/v0/classes/${encodeURI(main.currentClass)}/questions`);
         req.send();
     }
 
     static studentClassUpdateAnswer(qid: string, aid: string) {
-        let question: question = (<question>getQuestion(info.currentClass, qid));
+        let question: question = (<question>getQuestion(main.currentClass, qid));
 
         let currentAnswer: string = question.selected_answer;
         if (currentAnswer !== "") {
@@ -972,10 +960,10 @@ class studentClassPage {
         };
 
         // if question previously selected PUT else POST
-        if ((<question>getQuestion(info.currentClass, qid)).selected_answer === "") {
-            req.open("POST", `/api/v0/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}`);
+        if ((<question>getQuestion(main.currentClass, qid)).selected_answer === "") {
+            req.open("POST", `/api/v0/classes/${encodeURI(main.currentClass)}/questions/${encodeURI(qid)}`);
         } else {
-            req.open("PUT", `/api/v0/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}`);
+            req.open("PUT", `/api/v0/classes/${encodeURI(main.currentClass)}/questions/${encodeURI(qid)}`);
         }
 
         req.send(JSON.stringify(reqJSON));
@@ -1023,7 +1011,7 @@ function setupListeners() {
  * Helper functions
  ******************/
 function getQuestion(cid: string, qid: string): question | undefined {
-    let Class: Class | undefined = info.classList.get(cid);
+    let Class: Class | undefined = main.classList.get(cid);
     if (Class === undefined) {
         return undefined;
     }
