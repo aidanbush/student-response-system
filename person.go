@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"net/http"
+)
 
 type person struct {
 	Name string `db:"name" json:"name"`
@@ -8,6 +11,27 @@ type person struct {
 }
 
 const personUATLen = 10
+
+/* person routes */
+func getSelf(w http.ResponseWriter, r *http.Request) (person, error) {
+	person := person{}
+
+	UAT, err := getUAT(w, r)
+	if err != nil {
+		fmt.Println("getSelf:", err)
+		if err == errNoUAT || err == errInvalidUAT {
+			w.WriteHeader(http.StatusBadRequest)
+		} else {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+		return person, err
+	}
+	person.Pid = UAT
+
+	err = getName(&person)
+
+	return person, err
+}
 
 func createNewPerson(person *person) error {
 	q := `insert into person (pid, name) values ($1, $2)`

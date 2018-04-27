@@ -6,13 +6,30 @@ import (
 	"net/http"
 )
 
+/* person routes */
+func handleGetSelf(w http.ResponseWriter, r *http.Request) {
+	person, err := getSelf(w, r)
+	if err != nil {
+		return
+	}
+
+	jsonOut, err := json.Marshal(person)
+	if err != nil {
+		fmt.Println("json marshal: ", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "%s\n", string(jsonOut))
+}
+
 /* Class management */
 
 func handleCreateClass(w http.ResponseWriter, r *http.Request) {
 	class, err := createNewClass(w, r)
 	if err != nil {
 		fmt.Println("createNewClass: ", err)
-		//http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 

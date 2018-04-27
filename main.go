@@ -33,6 +33,8 @@ func main() {
 	defer db.Close()
 
 	r := mux.NewRouter()
+	// person routes
+	r.HandleFunc("/api/v0/person", handleGetSelf).Methods("GET")
 	// class management routes
 	r.HandleFunc("/api/v0/classes", handleCreateClass).Methods("POST")
 	r.HandleFunc("/api/v0/classes/{classID}", handleJoinClass).Methods("POST")
