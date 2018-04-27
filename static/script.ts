@@ -53,7 +53,31 @@ var info: globals = {
     currentPage: pageEnum.login,
 };
 
-var username:string = "";
+/*************
+ * Main class
+ ************/
+class main {
+
+    static username: string;
+    //static teachIDs: string[];
+    //static takeIDs: string[];
+    //static classList: Map<string, Class>;
+    //static currentClass: string;
+    //static currentPage: pageEnum;
+
+    static setup() {
+        this.setupListeners();
+
+        this.username = "";
+    }
+    static setupListeners() {
+        header.setup();
+        loginPage.setupLoginListeners();
+
+        studentClassPage.setup();
+        instructorClassPage.setup();
+    }
+}
 
 /*************
  * header
@@ -640,15 +664,8 @@ class instructorClassPage {
     }
 
     static onDeleteAnswerClick(event: Event) {
-        console.log("not implemented on server side");
-        return;
-        // TODO: implement server side
         let [, qid, aid]: string[] = (<HTMLElement>event.target).id.split("_");
         console.log("delete question, answer: ", qid, ", ", aid);
-
-        let reqJSON = {
-            answer_id: aid,
-        };
 
         let req: XMLHttpRequest = new XMLHttpRequest();
 
@@ -671,8 +688,8 @@ class instructorClassPage {
             instructorClassPage.deleteAnswerError(qid, aid, "Error: Can't connect to server");
         };
 
-        req.open("DELETE", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}`);
-        req.send(JSON.stringify(reqJSON));
+        req.open("DELETE", `/api/v0/instructors/classes/${encodeURI(info.currentClass)}/questions/${encodeURI(qid)}/answers/${encodeURI(aid)}`);
+        req.send();
     }
 
     /***********************************
@@ -1013,4 +1030,4 @@ function getQuestion(cid: string, qid: string): question | undefined {
     return Class.questions.find(question => question.question_id === qid);
 }
 
-setupListeners();
+main.setup();
