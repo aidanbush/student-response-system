@@ -56,6 +56,8 @@ class main {
         this.classList = new Map<string, Class>();
         this.currentClass = "";
         this.currentPage = pageEnum.login;
+
+        this.getName();
     }
 
     static setupListeners() {
@@ -72,6 +74,26 @@ class main {
             return undefined;
         }
         return Class.questions.find(question => question.question_id === qid);
+    }
+
+    static getName() {
+        if (document.cookie === "") {
+            return;
+        }
+
+        let req: XMLHttpRequest = new XMLHttpRequest();
+
+        req.onload = function () {
+            if (req.readyState === 4 && req.status === 200) {
+                let person: person = JSON.parse(req.responseText);
+                main.username = person.name;
+                loginPage.setNameHeader();
+                return;
+            }
+        };
+
+        req.open("GET", `/api/v0/person`);
+        req.send();
     }
 }
 
@@ -349,6 +371,17 @@ class loginPage {
         req.open("POST", `/api/v0/classes`);
         req.send(JSON.stringify(reqJSON));
         console.log(reqJSON);
+    }
+
+    static setNameHeader() {
+        if (main.username === "") {
+            return
+        }
+        (<HTMLElement>document.querySelector("#login_header")).innerHTML = `Hello ${main.username}`;
+    }
+
+    static setDefaultHeader() {
+        (<HTMLElement>document.querySelector("#login_header")).innerHTML = `Login`;
     }
 }
 /******************
