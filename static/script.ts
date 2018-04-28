@@ -112,6 +112,14 @@ class header {
         (<HTMLElement>document.querySelector("#header_instr_class_list_btn")).onclick = this.onInstrListClick
     }
 
+    static show() {
+        (<HTMLElement>document.querySelector("#header_buttons")).classList.remove("hidden");
+    }
+
+    static hide() {
+        (<HTMLElement>document.querySelector("#header_buttons")).classList.add("hidden");
+    }
+
     static onLogoutClick() {
         console.log("onLogoutClick")
         // goto login page and remove cookie
@@ -131,19 +139,9 @@ class header {
         console.log("onInstrListClick")
         // goto instructor list page
     }
-
-    static show() {
-        (<HTMLElement>document.querySelector("#header_buttons")).classList.remove("hidden");
-    }
-
-    static hide() {
-        (<HTMLElement>document.querySelector("#header_buttons")).classList.add("hidden");
-    }
 }
 
-/*************
- * login page
- ************/
+/* login page */
 type createRequest = {
     class: Class;
     person: person;
@@ -153,10 +151,26 @@ type joinRequest = {
     person: person;
 };
 
-/*******************
- * login page class
- ******************/
 class loginPage {
+
+    static setupLoginListeners() {
+        (<HTMLElement>document.querySelector("#join_heading")).onclick = this.onLoginJoinClick;
+        (<HTMLElement>document.querySelector("#create_heading")).onclick = this.onLoginCreateClick;
+        (<HTMLButtonElement>document.querySelector("#join_class_btn")).onclick = this.onJoinClassBtnClick;
+        (<HTMLButtonElement>document.querySelector("#new_class_btn")).onclick = this.onCreateClassBtnClick;
+        (<HTMLElement>document.querySelector("#class_list_heading")).onclick = this.onLoginListClick;
+        (<HTMLButtonElement>document.querySelector("#instr_class_list_button")).onclick = this.onInstrListClick;
+        (<HTMLButtonElement>document.querySelector("#student_class_list_button")).onclick = this.onStudentListClick;
+    }
+
+    static show() {
+    }
+
+    static hideLoginPage() {
+        (<HTMLElement>document.querySelector("#join")).classList.add("hidden");
+        (<HTMLElement>document.querySelector("#create")).classList.add("hidden");
+        (<HTMLElement>document.querySelector("#new")).classList.add("hidden");
+    }
 
     static onLoginJoinClick() {
         let joinDiv: HTMLElement = <HTMLElement>document.querySelector("#join");
@@ -168,6 +182,7 @@ class loginPage {
         return;
     }
 
+    /* listeners */
     static onLoginCreateClick() {
         let createDiv: HTMLElement = <HTMLElement>document.querySelector("#create");
         if (createDiv.classList.contains("hidden")) {
@@ -187,9 +202,6 @@ class loginPage {
         }
     }
 
-    /**********************
-     * login btn listeners
-     *********************/
     static onJoinClassBtnClick() {
         console.log("onJoinClassBtnClick");
 
@@ -257,9 +269,7 @@ class loginPage {
         console.log("onInstrListClick");
     }
 
-    /********************************
-     * login failed request handlers
-     *******************************/
+    /* login failed request handlers */
     static joinClassReqFail(error: string) {
         (<HTMLElement>document.querySelector("#join_input_error")).innerHTML = error;
 
@@ -272,9 +282,7 @@ class loginPage {
         console.log("create class error: ", error);
     }
 
-    /******************************
-     * login switch view functions
-     *****************************/
+    /* switch view functions */
     static switchInstructorClassView() {
         this.hideLoginPage();
 
@@ -289,31 +297,7 @@ class loginPage {
         studentClassPage.show();
     }
 
-    /*******************
-     * login hide views
-     ******************/
-    static hideLoginPage() {
-        (<HTMLElement>document.querySelector("#join")).classList.add("hidden");
-        (<HTMLElement>document.querySelector("#create")).classList.add("hidden");
-        (<HTMLElement>document.querySelector("#new")).classList.add("hidden");
-    }
-
-    /******************
-     * login listeners
-     *****************/
-    static setupLoginListeners() {
-        (<HTMLElement>document.querySelector("#join_heading")).onclick = this.onLoginJoinClick;
-        (<HTMLElement>document.querySelector("#create_heading")).onclick = this.onLoginCreateClick;
-        (<HTMLButtonElement>document.querySelector("#join_class_btn")).onclick = this.onJoinClassBtnClick;
-        (<HTMLButtonElement>document.querySelector("#new_class_btn")).onclick = this.onCreateClassBtnClick;
-        (<HTMLElement>document.querySelector("#class_list_heading")).onclick = this.onLoginListClick;
-        (<HTMLButtonElement>document.querySelector("#instr_class_list_button")).onclick = this.onInstrListClick;
-        (<HTMLButtonElement>document.querySelector("#student_class_list_button")).onclick = this.onStudentListClick;
-    }
-
-    /***************
-     * API Requests
-     **************/
+    /* API Requests */
     static joinClassRequest(classID: string, reqJSON: joinRequest) {
         let req: XMLHttpRequest = new XMLHttpRequest();
 
@@ -373,6 +357,7 @@ class loginPage {
         console.log(reqJSON);
     }
 
+    /* view updating */
     static setNameHeader() {
         if (main.username === "") {
             return
@@ -384,26 +369,18 @@ class loginPage {
         (<HTMLElement>document.querySelector("#login_header")).innerHTML = `Login`;
     }
 }
-/******************
- * Instructor Page
- *****************/
 
+/* Instructor Pages */
 type response = {
     answer_id: string;
     count: number;
 }
 
-/*******************
- * Instructor Views
- ******************/
 function displayInstructorPage() {
     (<HTMLElement>document.querySelector("#instructor_display_name")).innerHTML = `Hello ${main.username}`;
     (<HTMLElement>document.querySelector("#instructor_page")).classList.remove("hidden");
 }
 
-/******************************
- * Instructor Class View Class
- *****************************/
 class instructorClassPage {
 
     static questionTemplateFunction: doT.RenderFunction;
@@ -412,6 +389,46 @@ class instructorClassPage {
         let template: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_page_template");
 
         this.questionTemplateFunction = doT.template(template.innerHTML);
+    }
+
+    static setupListeners() {
+        this.questionListeners();
+
+        this.answerListeners();
+
+        console.log("add create question listener");
+
+        let createQuestion: HTMLElement = <HTMLElement>document.querySelector("#instr_new_question_btn");
+        createQuestion.onclick = this.onCreateQuestionClick;
+    }
+
+    static questionListeners() {
+        let deleteQuestions = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrQuestionDel_']");
+        for (var i = 0; i < deleteQuestions.length; ++i) {
+            deleteQuestions[i].onclick = this.onDeleteQuestionClick;
+        }
+
+        let addAnswers = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrQuestionAdd_']");
+        for (var i = 0; i < addAnswers.length; ++i) {
+            addAnswers[i].onclick = this.onAddAnswerClick;
+        }
+
+        let questionsPublic = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrQuestionPub_']");
+        for (var i = 0; i < questionsPublic.length; ++i) {
+            questionsPublic[i].onclick = this.onPublicQuestionClick;
+        }
+
+        let questionsResults = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrQuestionRes_']");
+        for (var i = 0; i < questionsResults.length; ++i) {
+            questionsResults[i].onclick = this.onQuestionResultsClick;
+        }
+    }
+
+    static answerListeners() {
+        let deleteAnswers = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='ansDel_']");
+        for (var i = 0; i < deleteAnswers.length; ++i) {
+            deleteAnswers[i].onclick = this.onDeleteAnswerClick;
+        }
     }
 
     static show() {
@@ -461,9 +478,7 @@ class instructorClassPage {
         this.setupListeners();
     }
 
-    /*********************************
-     * Instructor Class View updating
-     ********************************/
+    /* view updating */
     static instructorViewAddQuestion(question: question) {
         this.instructorClassDisplayQuestions();
     }
@@ -484,9 +499,7 @@ class instructorClassPage {
         this.instructorClassDisplayQuestions();
     }
 
-    /*****************************
-     * Instructor Class Listeners
-     ****************************/
+    /* listeners */
     static onCreateQuestionClick() {
         let nameInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#instr_new_question_name");
 
@@ -529,9 +542,6 @@ class instructorClassPage {
         req.send(JSON.stringify(reqJSON));
     }
 
-    /********************************
-     * Instructor Question Listeners
-     *******************************/
     static onDeleteQuestionClick(event: Event) {
         let qid: string = (<HTMLElement>event.target).id.split("_")[1]
         console.log("delete question: ", qid);
@@ -691,52 +701,7 @@ class instructorClassPage {
         req.send();
     }
 
-    /***********************************
-     * Instructor Class Listeners setup
-     **********************************/
-    static setupListeners() {
-        this.questionListeners();
-
-        this.answerListeners();
-
-        console.log("add create question listener");
-
-        let createQuestion: HTMLElement = <HTMLElement>document.querySelector("#instr_new_question_btn");
-        createQuestion.onclick = this.onCreateQuestionClick;
-    }
-
-    static questionListeners() {
-        let deleteQuestions = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrQuestionDel_']");
-        for (var i = 0; i < deleteQuestions.length; ++i) {
-            deleteQuestions[i].onclick = this.onDeleteQuestionClick;
-        }
-
-        let addAnswers = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrQuestionAdd_']");
-        for (var i = 0; i < addAnswers.length; ++i) {
-            addAnswers[i].onclick = this.onAddAnswerClick;
-        }
-
-        let questionsPublic = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrQuestionPub_']");
-        for (var i = 0; i < questionsPublic.length; ++i) {
-            questionsPublic[i].onclick = this.onPublicQuestionClick;
-        }
-
-        let questionsResults = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrQuestionRes_']");
-        for (var i = 0; i < questionsResults.length; ++i) {
-            questionsResults[i].onclick = this.onQuestionResultsClick;
-        }
-    }
-
-    static answerListeners() {
-        let deleteAnswers = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='ansDel_']");
-        for (var i = 0; i < deleteAnswers.length; ++i) {
-            deleteAnswers[i].onclick = this.onDeleteAnswerClick;
-        }
-    }
-
-    /*************************************
-     * instructor failed request handlers
-     ************************************/
+    /* failed request handlers */
     static requestClassError(error: string) {
         console.log("Class error: ", error);
     }
@@ -766,9 +731,6 @@ class instructorClassPage {
     }
 }
 
-/**********************************
- * Instructor Selection View Class
- *********************************/
 class instructorClassSelection {
 
     static classTemplateFunction: doT.RenderFunction;
@@ -776,6 +738,13 @@ class instructorClassSelection {
     static setup() {
         let template: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_list_template");
         this.classTemplateFunction = doT.template(template.innerHTML);
+    }
+
+    static setupListeners() {
+        let classList = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrSwitchClass_']");
+        for (var i = 0; i < classList.length; ++i) {
+            classList[i].onclick = this.onSwitchClassClick;
+        }
     }
 
     static show() {
@@ -797,13 +766,6 @@ class instructorClassSelection {
         this.setupListeners();
     }
 
-    static setupListeners() {
-        let classList = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrSwitchClass_']");
-        for (var i = 0; i < classList.length; ++i) {
-            classList[i].onclick = this.onSwitchClassClick;
-        }
-    }
-
     static onSwitchClassClick(event: Event) {
         let cid: string = (<HTMLElement>event.target).id.split("_")[1];
 
@@ -816,24 +778,16 @@ class instructorClassSelection {
     }
 }
 
-/****************
- * Student Pages
- ***************/
+/* Student Pages */
 type answerRequest = {
     answer_id:string;
 };
 
-/****************
- * Student Views
- ***************/
 function displayStudentPage() {
     (<HTMLElement>document.querySelector("#student_display_name")).innerHTML = `Hello ${main.username}`;
     (<HTMLElement>document.querySelector("#student_page")).classList.remove("hidden");
 }
 
-/***************************
- * Student Class View Class
- **************************/
 class studentClassPage {
 
     static questionTemplateFunc: doT.RenderFunction;
@@ -843,6 +797,16 @@ class studentClassPage {
 
         let template: HTMLElement = <HTMLElement>document.querySelector("#student_class_page_template");
         this.questionTemplateFunc = doT.template(template.innerHTML);
+    }
+
+    static setupListeners() {
+        (<HTMLElement>document.querySelector("#student_refresh_questions")).onclick = this.studentClassUpdateQuestions;
+
+        // answer listeners
+        let selectAnswers = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='ansSel_']");
+        for (var i = 0; i < selectAnswers.length; ++i) {
+            selectAnswers[i].onclick = this.onAnswerClick;
+        }
     }
 
     static show() {
@@ -875,9 +839,7 @@ class studentClassPage {
         this.setupListeners();
     }
 
-    /******************************
-     * Student Class View Updating
-     *****************************/
+    /* view updating */
     static studentClassUpdateQuestions() {
         let req: XMLHttpRequest = new XMLHttpRequest();
 
@@ -920,9 +882,7 @@ class studentClassPage {
         (<HTMLElement>document.querySelector(`#ansSel_${qid}_${aid}`)).classList.add("selected-answer");
     }
 
-    /**************************
-     * Student Class listeners
-     *************************/
+    /* listeners */
     static onAnswerClick(event: Event) {
         let [,qid, aid]: string[] = (<HTMLElement>event.target).id.split("_");
 
@@ -958,22 +918,7 @@ class studentClassPage {
         req.send(JSON.stringify(reqJSON));
     }
 
-    /********************************
-     * Student Class Listeners setup
-     *******************************/
-    static setupListeners() {
-        (<HTMLElement>document.querySelector("#student_refresh_questions")).onclick = this.studentClassUpdateQuestions;
-
-        // answer listeners
-        let selectAnswers = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='ansSel_']");
-        for (var i = 0; i < selectAnswers.length; ++i) {
-            selectAnswers[i].onclick = this.onAnswerClick;
-        }
-    }
-
-    /**********************************
-     * student failed request handlers
-     *********************************/
+    /* failed request handlers */
     static requestClassError(error: string) {
         console.log("Class error: ", error);
     }
