@@ -75,9 +75,9 @@ class main {
     }
 }
 
-/*************
- * header
- ************/
+/***************
+ * header class
+ **************/
 class header {
     static setup() {
         this.setupListeners();
@@ -131,10 +131,11 @@ type joinRequest = {
     person: person;
 };
 
-/**************************
- * login display listeners
- *************************/
+/*******************
+ * login page class
+ ******************/
 class loginPage {
+
     static onLoginJoinClick() {
         let joinDiv: HTMLElement = <HTMLElement>document.querySelector("#join");
         if (joinDiv.classList.contains("hidden")) {
@@ -186,7 +187,6 @@ class loginPage {
             main.username = nameInput.value;
         }
 
-        // create request json object
         let reqJSON: joinRequest = {
             person: {
                 name: main.username,
@@ -213,7 +213,6 @@ class loginPage {
             main.username = nameInput.value;
         }
 
-        // create request json object
         let reqJSON: createRequest = {
             person: {
                 name: main.username,
@@ -273,9 +272,7 @@ class loginPage {
      ******************/
     static hideLoginPage() {
         (<HTMLElement>document.querySelector("#join")).classList.add("hidden");
-
         (<HTMLElement>document.querySelector("#create")).classList.add("hidden");
-
         (<HTMLElement>document.querySelector("#new")).classList.add("hidden");
     }
 
@@ -283,19 +280,12 @@ class loginPage {
      * login listeners
      *****************/
     static setupLoginListeners() {
-        console.log("setupLoginListeners");
         (<HTMLElement>document.querySelector("#join_heading")).onclick = this.onLoginJoinClick;
-
         (<HTMLElement>document.querySelector("#create_heading")).onclick = this.onLoginCreateClick;
-
         (<HTMLButtonElement>document.querySelector("#join_class_btn")).onclick = this.onJoinClassBtnClick;
-
         (<HTMLButtonElement>document.querySelector("#new_class_btn")).onclick = this.onCreateClassBtnClick;
-
         (<HTMLElement>document.querySelector("#class_list_heading")).onclick = this.onLoginListClick;
-
         (<HTMLButtonElement>document.querySelector("#instr_class_list_button")).onclick = this.onInstrListClick;
-
         (<HTMLButtonElement>document.querySelector("#student_class_list_button")).onclick = this.onStudentListClick;
     }
 
@@ -305,7 +295,6 @@ class loginPage {
     static joinClassRequest(classID: string, reqJSON: joinRequest) {
         let req: XMLHttpRequest = new XMLHttpRequest();
 
-        // response listener
         req.onload = function () {
             if (req.readyState === 4 && req.status === 200) {
                 let res: createRequest = JSON.parse(req.responseText);
@@ -340,7 +329,6 @@ class loginPage {
             if (req.readyState === 4 && req.status === 200) {
                 let res: createRequest = JSON.parse(req.responseText);
 
-                // add to list of classes
                 main.classList.set(res.class.class_id, res.class);
                 main.currentClass = res.class.class_id;
 
@@ -376,17 +364,13 @@ type response = {
  * Instructor Views
  ******************/
 function displayInstructorPage() {
-    // TODO set name
-    let instructorNameDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_display_name");
-    instructorNameDiv.innerHTML = `Hello ${main.username}`;
-
-    let instructorDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_page");
-    instructorDiv.classList.remove("hidden");
+    (<HTMLElement>document.querySelector("#instructor_display_name")).innerHTML = `Hello ${main.username}`;
+    (<HTMLElement>document.querySelector("#instructor_page")).classList.remove("hidden");
 }
 
-/************************
- * Instructor Class View
- ***********************/
+/******************************
+ * Instructor Class View Class
+ *****************************/
 class instructorClassPage {
 
     static questionTemplateFunction: doT.RenderFunction;
@@ -402,7 +386,6 @@ class instructorClassPage {
 
         req.onload = function () {
             if (req.readyState === 4 && req.status === 200) {
-                // add questions to class list and update
                 let res: question[] = JSON.parse(req.responseText);
                 (<Class>main.classList.get(main.currentClass)).questions = res;
 
@@ -432,13 +415,8 @@ class instructorClassPage {
     }
 
     static hide() {
-        // clear questions
-        let classPageDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_page");
-        classPageDiv.innerHTML = "";
-
-        // hide page
-        let classDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_page");
-        classDiv.classList.add("hidden");
+        (<HTMLElement>document.querySelector("#instructor_class_page")).innerHTML = "";
+        (<HTMLElement>document.querySelector("#instructor_class_page")).classList.add("hidden");
 
         header.hide();
     }
@@ -493,14 +471,10 @@ class instructorClassPage {
             selected_answer: "",
         };
 
-
-        // make request
         let req: XMLHttpRequest = new XMLHttpRequest();
 
-        // response listener
         req.onload = function () {
             if (req.readyState === 4 && req.status === 200) {
-                // retrieve and add question
                 let res: question = JSON.parse(req.responseText);
                 (<Class>main.classList.get(main.currentClass)).questions.push(res);
 
@@ -533,10 +507,9 @@ class instructorClassPage {
 
         req.onload = function () {
             if (req.readyState === 4 && req.status === 204) {
-                // delete local copy
                 let Class: Class = <Class>main.classList.get(main.currentClass);
                 Class.questions = Class.questions.filter(question => question.question_id !== qid);
-                // redraw
+
                 instructorClassPage.instructorViewDeleteQuestion(qid);
                 return;
             }
@@ -599,19 +572,16 @@ class instructorClassPage {
 
     static onPublicQuestionClick(event: Event) {
         let qid: string = (<HTMLElement>event.target).id.split("_")[1]
-        // make public request
         console.log("make public question: ", qid);
 
-        // setup request object
-        let reqJSON: question = <question>(<Class>main.classList.get(main.currentClass)).questions.find(question => question.question_id === qid);
+        let reqJSON: question = Object.assign({}, main.getQuestion(main.currentClass, qid));
         reqJSON.public = true;
 
         let req: XMLHttpRequest = new XMLHttpRequest();
 
         req.onload = function () {
             if (req.readyState === 4 && req.status === 200) {
-                // update question
-                let question: question = <question>(<Class>main.classList.get(main.currentClass)).questions.find(question => question.question_id === qid);
+                let question: question = main.getQuestion(main.currentClass, qid);
                 question.public = true;
 
                 instructorClassPage.instructorViewUpdateQuestion(question);
@@ -764,14 +734,13 @@ class instructorClassPage {
 }
 
 /**********************************
- * Instructor Class Selection View
+ * Instructor Selection View Class
  *********************************/
 class instructorClassSelection {
 
     static classTemplateFunction: doT.RenderFunction;
 
     static setup() {
-        // setup template
         let template: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_list_template");
         this.classTemplateFunction = doT.template(template.innerHTML);
     }
@@ -779,23 +748,17 @@ class instructorClassSelection {
     static show() {
         displayInstructorPage();
 
-        // show div
         let selectionDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_selection_page");
         selectionDiv.classList.remove("hidden");
     }
 
     static hide() {
-        // empty list
-        let classListDiv: HTMLElement = <HTMLElement>document.querySelector("#instr_class_list");
-        classListDiv.innerHTML = "";
-
-        let selectionDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_selection_page");
-        selectionDiv.classList.add("hidden");
+        (<HTMLElement>document.querySelector("#instr_class_list")).innerHTML = "";
+        (<HTMLElement>document.querySelector("#instructor_class_selection_page")).classList.add("hidden");
     }
 
     static fillPage() {
         let classListDiv: HTMLElement = <HTMLElement>document.querySelector("#instr_class_list");
-
         classListDiv.innerHTML = this.classTemplateFunction(main.classList.get(main.currentClass));
 
         this.setupListeners();
@@ -820,9 +783,9 @@ class instructorClassSelection {
     }
 }
 
-/***************
- * Student Page
- **************/
+/****************
+ * Student Pages
+ ***************/
 type answerRequest = {
     answer_id:string;
 };
@@ -831,18 +794,13 @@ type answerRequest = {
  * Student Views
  ***************/
 function displayStudentPage() {
-    // TODO set name
-    let instructorNameDiv: HTMLElement = <HTMLElement>document.querySelector("#student_display_name");
-    instructorNameDiv.innerHTML = `Hello ${main.username}`;
-
-    // show page
-    let classDiv: HTMLElement = <HTMLElement>document.querySelector("#student_page");
-    classDiv.classList.remove("hidden");
+    (<HTMLElement>document.querySelector("#student_display_name")).innerHTML = `Hello ${main.username}`;
+    (<HTMLElement>document.querySelector("#student_page")).classList.remove("hidden");
 }
 
-/*********************
- * Student Class View
- ********************/
+/***************************
+ * Student Class View Class
+ **************************/
 class studentClassPage {
 
     static questionTemplateFunc: doT.RenderFunction;
@@ -857,12 +815,9 @@ class studentClassPage {
     static show() {
         this.studentClassUpdateQuestions();
 
-        // display page
         displayStudentPage();
 
-        // display class page
-        let classDiv: HTMLElement = <HTMLElement>document.querySelector("#student_class_page");
-        classDiv.classList.remove("hidden");
+        (<HTMLElement>document.querySelector("#student_class_page")).classList.remove("hidden");
 
         header.show();
     }
@@ -876,10 +831,8 @@ class studentClassPage {
 
     static studentClassDisplayQuestions() {
         let classPageDiv: HTMLElement = <HTMLElement>document.querySelector("#student_class_page");
-
         classPageDiv.innerHTML = this.questionTemplateFunc(main.classList.get(main.currentClass));
 
-        // show selected answers
         for (let q of (<Class>main.classList.get(main.currentClass)).questions) {
             if (q.selected_answer != "") {
                 this.StudentClassViewSelectAnswer(q.question_id, q.selected_answer);
@@ -897,10 +850,8 @@ class studentClassPage {
 
         req.onload = function () {
             if (req.readyState === 4 && req.status === 200) {
-                // get add questions to class object
                 let res: question[] = JSON.parse(req.responseText);
 
-                // set questions
                 (<Class>main.classList.get(main.currentClass)).questions = res;
                 studentClassPage.studentClassDisplayQuestions();
                 return;
@@ -942,8 +893,6 @@ class studentClassPage {
     static onAnswerClick(event: Event) {
         let [,qid, aid]: string[] = (<HTMLElement>event.target).id.split("_");
 
-        // send answer
-        //reqJSON
         let reqJSON: answerRequest = {
             answer_id: aid,
         };
@@ -952,7 +901,6 @@ class studentClassPage {
 
         req.onload = function () {
             if (req.readyState === 4 && req.status === 200) {
-                // update answer
                 studentClassPage.studentClassUpdateAnswer(qid, aid);
                 return;
             }
@@ -981,9 +929,7 @@ class studentClassPage {
      * Student Class Listeners setup
      *******************************/
     static setupListeners() {
-        // refresh listener
-        let refreshDiv: HTMLElement = <HTMLElement>document.querySelector("#student_refresh_questions");
-        refreshDiv.onclick = this.studentClassUpdateQuestions;
+        (<HTMLElement>document.querySelector("#student_refresh_questions")).onclick = this.studentClassUpdateQuestions;
 
         // answer listeners
         let selectAnswers = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='ansSel_']");
