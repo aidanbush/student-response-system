@@ -1,7 +1,4 @@
-/*******************
- * Global Variables
- ******************/
-
+/* types */
 type person = {
     name: string;
 };
@@ -35,9 +32,7 @@ enum pageEnum {
     StudentList,
 };
 
-/*************
- * Main class
- ************/
+/* Main class */
 class main {
 
     static username: string;
@@ -62,7 +57,7 @@ class main {
 
     static setupListeners() {
         header.setup();
-        loginPage.setupLoginListeners();
+        loginPage.setup();
 
         studentClassPage.setup();
         instructorClassPage.setup();
@@ -97,19 +92,16 @@ class main {
     }
 }
 
-/***************
- * header class
- **************/
 class header {
     static setup() {
         this.setupListeners();
     }
 
     static setupListeners() {
-        (<HTMLElement>document.querySelector("#header_logout_btn")).onclick = this.onLogoutClick;
-        (<HTMLElement>document.querySelector("#header_join_create_btn")).onclick = this.onJoinCreateClick;
-        (<HTMLElement>document.querySelector("#header_student_class_list_btn")).onclick = this.onStudentListClick;
-        (<HTMLElement>document.querySelector("#header_instr_class_list_btn")).onclick = this.onInstrListClick
+        (<HTMLElement>document.querySelector("#header_logout_btn")).onclick = this.logoutClick;
+        (<HTMLElement>document.querySelector("#header_join_create_btn")).onclick = this.joinCreateClick;
+        (<HTMLElement>document.querySelector("#header_student_class_list_btn")).onclick = this.studentListClick;
+        (<HTMLElement>document.querySelector("#header_instr_class_list_btn")).onclick = this.instrListClick
     }
 
     static show() {
@@ -120,22 +112,22 @@ class header {
         (<HTMLElement>document.querySelector("#header_buttons")).classList.add("hidden");
     }
 
-    static onLogoutClick() {
+    static logoutClick() {
         console.log("onLogoutClick")
         // goto login page and remove cookie
     }
 
-    static onJoinCreateClick() {
+    static joinCreateClick() {
         console.log("onJoinCreateClick")
         // goto login page
     }
 
-    static onStudentListClick() {
+    static studentListClick() {
         console.log("onStudentListClick")
         // goto student class list page
     }
 
-    static onInstrListClick() {
+    static instrListClick() {
         console.log("onInstrListClick")
         // goto instructor list page
     }
@@ -153,26 +145,30 @@ type joinRequest = {
 
 class loginPage {
 
-    static setupLoginListeners() {
-        (<HTMLElement>document.querySelector("#join_heading")).onclick = this.onLoginJoinClick;
-        (<HTMLElement>document.querySelector("#create_heading")).onclick = this.onLoginCreateClick;
-        (<HTMLButtonElement>document.querySelector("#join_class_btn")).onclick = this.onJoinClassBtnClick;
-        (<HTMLButtonElement>document.querySelector("#new_class_btn")).onclick = this.onCreateClassBtnClick;
-        (<HTMLElement>document.querySelector("#class_list_heading")).onclick = this.onLoginListClick;
-        (<HTMLButtonElement>document.querySelector("#instr_class_list_button")).onclick = this.onInstrListClick;
-        (<HTMLButtonElement>document.querySelector("#student_class_list_button")).onclick = this.onStudentListClick;
+    static setup() {
+        this.setupListeners();
+    }
+
+    static setupListeners() {
+        (<HTMLElement>document.querySelector("#join_heading")).onclick = this.joinClick;
+        (<HTMLElement>document.querySelector("#create_heading")).onclick = this.createClick;
+        (<HTMLButtonElement>document.querySelector("#join_class_btn")).onclick = this.joinClassBtnClick;
+        (<HTMLButtonElement>document.querySelector("#new_class_btn")).onclick = this.createClassBtnClick;
+        (<HTMLElement>document.querySelector("#class_list_heading")).onclick = this.listClick;
+        (<HTMLButtonElement>document.querySelector("#instr_class_list_button")).onclick = this.instrListClick;
+        (<HTMLButtonElement>document.querySelector("#student_class_list_button")).onclick = this.studentListClick;
     }
 
     static show() {
     }
 
-    static hideLoginPage() {
+    static hide() {
         (<HTMLElement>document.querySelector("#join")).classList.add("hidden");
         (<HTMLElement>document.querySelector("#create")).classList.add("hidden");
         (<HTMLElement>document.querySelector("#new")).classList.add("hidden");
     }
 
-    static onLoginJoinClick() {
+    static joinClick() {
         let joinDiv: HTMLElement = <HTMLElement>document.querySelector("#join");
         if (joinDiv.classList.contains("hidden")) {
             joinDiv.classList.remove("hidden");
@@ -183,7 +179,7 @@ class loginPage {
     }
 
     /* listeners */
-    static onLoginCreateClick() {
+    static createClick() {
         let createDiv: HTMLElement = <HTMLElement>document.querySelector("#create");
         if (createDiv.classList.contains("hidden")) {
             createDiv.classList.remove("hidden");
@@ -193,7 +189,7 @@ class loginPage {
         return;
     }
 
-    static onLoginListClick() {
+    static listClick() {
         let listDiv: HTMLElement = <HTMLElement>document.querySelector("#list_classes");
         if (listDiv.classList.contains("hidden")) {
             listDiv.classList.remove("hidden");
@@ -202,7 +198,7 @@ class loginPage {
         }
     }
 
-    static onJoinClassBtnClick() {
+    static joinClassBtnClick() {
         console.log("onJoinClassBtnClick");
 
         let classIDInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#join_class_id");
@@ -230,7 +226,7 @@ class loginPage {
         loginPage.joinClassRequest(classID, reqJSON);
     }
 
-    static onCreateClassBtnClick() {
+    static createClassBtnClick() {
         console.log("onCreateClassBtnClick")
 
         let classNameInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#new_class_name");
@@ -261,11 +257,11 @@ class loginPage {
         loginPage.createClassRequest(reqJSON);
     }
 
-    static onStudentListClick() {
+    static studentListClick() {
         console.log("onStudentListClick");
     }
 
-    static onInstrListClick() {
+    static instrListClick() {
         console.log("onInstrListClick");
     }
 
@@ -284,14 +280,14 @@ class loginPage {
 
     /* switch view functions */
     static switchInstructorClassView() {
-        this.hideLoginPage();
+        this.hide();
 
         main.currentPage = pageEnum.instrView;
         instructorClassPage.show();
     }
 
     static switchStudentClassView() {
-        this.hideLoginPage();
+        this.hide();
 
         main.currentPage = pageEnum.StudentView;
         studentClassPage.show();
@@ -358,6 +354,14 @@ class loginPage {
     }
 
     /* view updating */
+    static setHeader() {
+        if (main.username === "") {
+            this.setDefaultHeader();
+        } else {
+            this.setNameHeader();
+        }
+    }
+
     static setNameHeader() {
         if (main.username === "") {
             return
@@ -399,35 +403,35 @@ class instructorClassPage {
         console.log("add create question listener");
 
         let createQuestion: HTMLElement = <HTMLElement>document.querySelector("#instr_new_question_btn");
-        createQuestion.onclick = this.onCreateQuestionClick;
+        createQuestion.onclick = this.createQuestionClick;
     }
 
     static questionListeners() {
         let deleteQuestions = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrQuestionDel_']");
         for (var i = 0; i < deleteQuestions.length; ++i) {
-            deleteQuestions[i].onclick = this.onDeleteQuestionClick;
+            deleteQuestions[i].onclick = this.deleteQuestionClick;
         }
 
         let addAnswers = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrQuestionAdd_']");
         for (var i = 0; i < addAnswers.length; ++i) {
-            addAnswers[i].onclick = this.onAddAnswerClick;
+            addAnswers[i].onclick = this.addAnswerClick;
         }
 
         let questionsPublic = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrQuestionPub_']");
         for (var i = 0; i < questionsPublic.length; ++i) {
-            questionsPublic[i].onclick = this.onPublicQuestionClick;
+            questionsPublic[i].onclick = this.publicQuestionClick;
         }
 
         let questionsResults = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrQuestionRes_']");
         for (var i = 0; i < questionsResults.length; ++i) {
-            questionsResults[i].onclick = this.onQuestionResultsClick;
+            questionsResults[i].onclick = this.questionResultsClick;
         }
     }
 
     static answerListeners() {
         let deleteAnswers = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='ansDel_']");
         for (var i = 0; i < deleteAnswers.length; ++i) {
-            deleteAnswers[i].onclick = this.onDeleteAnswerClick;
+            deleteAnswers[i].onclick = this.deleteAnswerClick;
         }
     }
 
@@ -439,7 +443,7 @@ class instructorClassPage {
                 let res: question[] = JSON.parse(req.responseText);
                 (<Class>main.classList.get(main.currentClass)).questions = res;
 
-                instructorClassPage.instructorClassDisplayQuestions();
+                instructorClassPage.displayQuestions();
                 return;
             }
             instructorClassPage.requestClassError("Error: Failed to create class");
@@ -471,7 +475,7 @@ class instructorClassPage {
         header.hide();
     }
 
-    static instructorClassDisplayQuestions() {
+    static displayQuestions() {
         let classPageDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_page");
         classPageDiv.innerHTML = this.questionTemplateFunction(main.classList.get(main.currentClass));
 
@@ -480,15 +484,15 @@ class instructorClassPage {
 
     /* view updating */
     static instructorViewAddQuestion(question: question) {
-        this.instructorClassDisplayQuestions();
+        this.displayQuestions();
     }
 
     static instructorViewUpdateQuestion(question: question) {
-        this.instructorClassDisplayQuestions();
+        this.displayQuestions();
     }
 
     static instructorViewAddAnswer(answer: answer) {
-        this.instructorClassDisplayQuestions();
+        this.displayQuestions();
     }
 
     static instructorViewQuestionResults(response: response) {
@@ -496,11 +500,11 @@ class instructorClassPage {
     }
 
     static instructorViewDeleteQuestion(qid: string) {
-        this.instructorClassDisplayQuestions();
+        this.displayQuestions();
     }
 
     /* listeners */
-    static onCreateQuestionClick() {
+    static createQuestionClick() {
         let nameInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#instr_new_question_name");
 
         if (nameInput.value === "") {
@@ -542,7 +546,7 @@ class instructorClassPage {
         req.send(JSON.stringify(reqJSON));
     }
 
-    static onDeleteQuestionClick(event: Event) {
+    static deleteQuestionClick(event: Event) {
         let qid: string = (<HTMLElement>event.target).id.split("_")[1]
         console.log("delete question: ", qid);
 
@@ -571,7 +575,7 @@ class instructorClassPage {
         req.send();
     }
 
-    static onAddAnswerClick(event: Event) {
+    static addAnswerClick(event: Event) {
         let qid: string = (<HTMLElement>event.target).id.split("_")[1];
 
         let answerText: string = (<HTMLInputElement>document.querySelector(`#instrQuestionAddText_${encodeURI(qid)}`)).value;
@@ -613,7 +617,7 @@ class instructorClassPage {
         req.send(JSON.stringify(reqJSON));
     }
 
-    static onPublicQuestionClick(event: Event) {
+    static publicQuestionClick(event: Event) {
         let qid: string = (<HTMLElement>event.target).id.split("_")[1]
         console.log("make public question: ", qid);
 
@@ -645,7 +649,7 @@ class instructorClassPage {
         req.send(JSON.stringify(reqJSON));
     }
 
-    static onQuestionResultsClick(event: Event) {
+    static questionResultsClick(event: Event) {
         let qid: string = (<HTMLElement>event.target).id.split("_")[1];
         console.log("results question: ", qid);
 
@@ -672,7 +676,7 @@ class instructorClassPage {
         req.send();
     }
 
-    static onDeleteAnswerClick(event: Event) {
+    static deleteAnswerClick(event: Event) {
         let [, qid, aid]: string[] = (<HTMLElement>event.target).id.split("_");
         console.log("delete question, answer: ", qid, ", ", aid);
 
@@ -743,7 +747,7 @@ class instructorClassSelection {
     static setupListeners() {
         let classList = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrSwitchClass_']");
         for (var i = 0; i < classList.length; ++i) {
-            classList[i].onclick = this.onSwitchClassClick;
+            classList[i].onclick = this.switchClassClick;
         }
     }
 
@@ -766,7 +770,7 @@ class instructorClassSelection {
         this.setupListeners();
     }
 
-    static onSwitchClassClick(event: Event) {
+    static switchClassClick(event: Event) {
         let cid: string = (<HTMLElement>event.target).id.split("_")[1];
 
         this.hide();
@@ -800,17 +804,17 @@ class studentClassPage {
     }
 
     static setupListeners() {
-        (<HTMLElement>document.querySelector("#student_refresh_questions")).onclick = this.studentClassUpdateQuestions;
+        (<HTMLElement>document.querySelector("#student_refresh_questions")).onclick = this.updateQuestions;
 
         // answer listeners
         let selectAnswers = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='ansSel_']");
         for (var i = 0; i < selectAnswers.length; ++i) {
-            selectAnswers[i].onclick = this.onAnswerClick;
+            selectAnswers[i].onclick = this.answerClick;
         }
     }
 
     static show() {
-        this.studentClassUpdateQuestions();
+        this.updateQuestions();
 
         displayStudentPage();
 
@@ -832,7 +836,7 @@ class studentClassPage {
 
         for (let q of (<Class>main.classList.get(main.currentClass)).questions) {
             if (q.selected_answer != "") {
-                this.StudentClassViewSelectAnswer(q.question_id, q.selected_answer);
+                this.SetSelectAnswer(q.question_id, q.selected_answer);
             }
         }
 
@@ -840,7 +844,7 @@ class studentClassPage {
     }
 
     /* view updating */
-    static studentClassUpdateQuestions() {
+    static updateQuestions() {
         let req: XMLHttpRequest = new XMLHttpRequest();
 
         req.onload = function () {
@@ -866,7 +870,7 @@ class studentClassPage {
         req.send();
     }
 
-    static studentClassUpdateAnswer(qid: string, aid: string) {
+    static updateAnswer(qid: string, aid: string) {
         let question: question = (<question>main.getQuestion(main.currentClass, qid));
 
         let currentAnswer: string = question.selected_answer;
@@ -875,15 +879,15 @@ class studentClassPage {
         }
         question.selected_answer = aid;
 
-        this.StudentClassViewSelectAnswer(qid, aid);
+        this.SetSelectAnswer(qid, aid);
     }
 
-    static StudentClassViewSelectAnswer(qid: string, aid: string) {
+    static SetSelectAnswer(qid: string, aid: string) {
         (<HTMLElement>document.querySelector(`#ansSel_${qid}_${aid}`)).classList.add("selected-answer");
     }
 
     /* listeners */
-    static onAnswerClick(event: Event) {
+    static answerClick(event: Event) {
         let [,qid, aid]: string[] = (<HTMLElement>event.target).id.split("_");
 
         let reqJSON: answerRequest = {
@@ -894,7 +898,7 @@ class studentClassPage {
 
         req.onload = function () {
             if (req.readyState === 4 && req.status === 200) {
-                studentClassPage.studentClassUpdateAnswer(qid, aid);
+                studentClassPage.updateAnswer(qid, aid);
                 return;
             }
             studentClassPage.submitAnswerError("Error: Can't connect to server");
