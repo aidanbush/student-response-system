@@ -36,8 +36,8 @@ enum pageEnum {
 class main {
 
     static username: string;
-    static teachIDs: string[];
-    static takeIDs: string[];
+    static teaches: Class[];
+    static takes: string[];
     static classList: Map<string, Class>;
     static currentClass: string;
     static currentPage: pageEnum;
@@ -46,8 +46,8 @@ class main {
         this.setupListeners();
 
         this.username = "";
-        this.teachIDs = [];
-        this.takeIDs = [];
+        this.teaches = [];
+        this.takes = [];
         this.classList = new Map<string, Class>();
         this.currentClass = "";
         this.currentPage = pageEnum.login;
@@ -160,6 +160,9 @@ class loginPage {
     }
 
     static show() {
+        (<HTMLElement>document.querySelector("#join")).classList.remove("hidden");
+        (<HTMLElement>document.querySelector("#create")).classList.remove("hidden");
+        (<HTMLElement>document.querySelector("#new")).classList.remove("hidden");
     }
 
     static hide() {
@@ -385,6 +388,10 @@ function displayInstructorPage() {
     (<HTMLElement>document.querySelector("#instructor_page")).classList.remove("hidden");
 }
 
+function hideInstructorPage() {
+    (<HTMLElement>document.querySelector("#instructor_page")).classList.add("hidden");
+}
+
 class instructorClassPage {
 
     static questionTemplateFunction: doT.RenderFunction;
@@ -469,6 +476,8 @@ class instructorClassPage {
     }
 
     static hide() {
+        hideInstructorPage();
+
         (<HTMLElement>document.querySelector("#instructor_class_page")).innerHTML = "";
         (<HTMLElement>document.querySelector("#instructor_class_page")).classList.add("hidden");
 
@@ -756,9 +765,17 @@ class instructorClassSelection {
 
         let selectionDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_selection_page");
         selectionDiv.classList.remove("hidden");
+
+        if (main.teaches.length == 0) {
+            this.getClassList();
+        } else {
+            instructorClassSelection.showClasses();
+        }
     }
 
     static hide() {
+        hideInstructorPage();
+
         (<HTMLElement>document.querySelector("#instr_class_list")).innerHTML = "";
         (<HTMLElement>document.querySelector("#instructor_class_selection_page")).classList.add("hidden");
     }
@@ -773,12 +790,52 @@ class instructorClassSelection {
     static switchClassClick(event: Event) {
         let cid: string = (<HTMLElement>event.target).id.split("_")[1];
 
+        console.log("switchClassClick cid: ", cid);
+        return;
+
         this.hide();
 
         main.currentClass = cid;
         main.currentPage = pageEnum.instrView;
 
         instructorClassPage.show();
+    }
+
+    static showClasses() {
+        let classListDiv: HTMLElement = <HTMLElement>document.querySelector("#instr_class_list");
+        classListDiv.innerHTML = this.classTemplateFunction(main.teaches);
+
+        this.setupListeners();
+    }
+
+    /* api requests */
+    static getClassList() {
+        let req: XMLHttpRequest = new XMLHttpRequest();
+
+        req.onload = function () {
+            if (req.readyState === 4 && req.status === 200) {
+                let classList: Class[] = JSON.parse(req.responseText);
+                main.teaches = classList;
+                instructorClassSelection.showClasses();
+                return;
+            }
+            instructorClassSelection.requestClassListError("Error: Can't connect to server")
+        };
+
+        req.onerror = function () {
+            instructorClassSelection.requestClassListError("Error: Can't connect to server")
+        };
+
+        req.onabort = function () {
+            instructorClassSelection.requestClassListError("Error: Can't connect to server")
+        };
+
+        req.open("GET", `/api/v0/instructors/classes`);
+        req.send();
+    }
+
+    static requestClassListError(error: string) {
+        console.log("Class list error:", error);
     }
 }
 
