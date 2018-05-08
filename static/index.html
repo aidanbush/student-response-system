@@ -11,12 +11,12 @@
 <div id="header_buttons" class="hidden">
     <div id="header_logout_btn">Logout</div>
     <div id="header_join_create_btn">Join/Create Classes</div>
-    <div id="header_student_class_list_btn">Enrolled Classes</div>
-    <div id="header_instr_class_list_btn">Teaching Classes</div>
+    <div id="header_student_class_list_btn" class="hidden">Enrolled Classes</div>
+    <div id="header_instr_class_list_btn" class="hidden">Teaching Classes</div>
 </div>
 
 <!-- Login page -->
-<div id="new">
+<div id="new" class="hidden">
 <!-- page doT templates -->
 <!-- page contents -->
     <div class="page_header">
@@ -61,10 +61,12 @@
         <div id="new_input_error"></div>
     </div>
 <!-- class list buttons -->
-    <h4 id="class_list_heading">Class Lists</h4>
-    <div id="list_classes" class="hidden">
-        <button id="student_class_list_button">Student class list</button>
-        <button id="instr_class_list_button">Instructor class list</button>
+    <div id="class_list_btns" class="hidden">
+        <h4 id="class_list_heading">Class Lists</h4>
+        <div id="list_classes" class="hidden">
+            <button id="student_class_list_button">Student class list</button>
+            <button id="instr_class_list_button">Instructor class list</button>
+        </div>
     </div>
 </div>
 

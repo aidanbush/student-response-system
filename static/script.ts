@@ -57,6 +57,8 @@ class main {
         this.currentClass = "";
         this.currentPage = pageEnum.login;
 
+        loginPage.show();
+
         this.getName();
     }
 
@@ -100,6 +102,10 @@ class main {
         document.cookie = 'UAT=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
     }
 
+    static hasCookie(): boolean {
+        return document.cookie.indexOf('UAT=') !== -1;
+    }
+
     static switchView(newPage: pageEnum) {
         console.log("switchView", newPage);
         switch (this.currentPage) {
@@ -124,6 +130,8 @@ class main {
                 return;
         }
 
+        this.currentPage = newPage;
+
         switch (newPage) {
             case pageEnum.login:
                 loginPage.show();
@@ -144,7 +152,6 @@ class main {
             default:
                 return;
         }
-        this.currentPage = newPage;
     }
 }
 
@@ -162,22 +169,30 @@ class header implements view {
 
     static show() {
         (<HTMLElement>document.querySelector("#header_buttons")).classList.remove("hidden");
+        if (main.currentPage !== pageEnum.instrList) {
+            (<HTMLElement>document.querySelector("#header_instr_class_list_btn")).classList.remove("hidden");
+        }
+        if (main.currentPage !== pageEnum.StudentList) {
+            (<HTMLElement>document.querySelector("#header_student_class_list_btn")).classList.remove("hidden");
+        }
     }
 
     static hide() {
         (<HTMLElement>document.querySelector("#header_buttons")).classList.add("hidden");
+        (<HTMLElement>document.querySelector("#header_instr_class_list_btn")).classList.add("hidden");
+        (<HTMLElement>document.querySelector("#header_student_class_list_btn")).classList.add("hidden");
     }
 
     static logoutClick() {
         console.log("onLogoutClick")
-        // goto login page and remove cookie
+
         main.deleteCookie();
         main.switchView(pageEnum.login);
     }
 
     static joinCreateClick() {
         console.log("onJoinCreateClick")
-        // goto login page
+
         main.switchView(pageEnum.login);
     }
 
@@ -188,7 +203,7 @@ class header implements view {
 
     static instrListClick() {
         console.log("onInstrListClick")
-        // goto instructor list page
+
         main.switchView(pageEnum.instrList);
     }
 }
@@ -221,12 +236,16 @@ class loginPage implements view {
 
     static show() {
         (<HTMLElement>document.querySelector("#new")).classList.remove("hidden");
+        if (main.hasCookie()) {
+            (<HTMLElement>document.querySelector("#class_list_btns")).classList.remove("hidden");
+        }
     }
 
     static hide() {
         (<HTMLElement>document.querySelector("#join")).classList.add("hidden");
         (<HTMLElement>document.querySelector("#create")).classList.add("hidden");
         (<HTMLElement>document.querySelector("#new")).classList.add("hidden");
+        (<HTMLElement>document.querySelector("#class_list_btns")).classList.add("hidden");
     }
 
     static joinClick() {
