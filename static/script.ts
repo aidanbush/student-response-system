@@ -32,6 +32,11 @@ enum pageEnum {
     StudentList,
 };
 
+abstract class view {
+    static show(){}
+    static hide(){}
+}
+
 /* Main class */
 class main {
 
@@ -90,9 +95,60 @@ class main {
         req.open("GET", `/api/v0/person`);
         req.send();
     }
+
+    static deleteCookie() {
+        document.cookie = 'UAT=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    }
+
+    static switchView(newPage: pageEnum) {
+        console.log("switchView", newPage);
+        switch (this.currentPage) {
+            case pageEnum.login:
+                console.log("loginPage.hide()");
+                loginPage.hide();
+                break;
+            case pageEnum.instrView:
+                instructorClassPage.hide();
+                break;
+            case pageEnum.instrList:
+                instructorClassSelection.hide();
+                break;
+            case pageEnum.StudentView:
+                studentClassPage.hide();
+                break;
+            case pageEnum.StudentList:
+                console.log("studentClassSelection unimplemented");
+                break;
+            default:
+                console.log("hide default");
+                return;
+        }
+
+        switch (newPage) {
+            case pageEnum.login:
+                loginPage.show();
+                break;
+            case pageEnum.instrView:
+                instructorClassPage.show();
+                break;
+            case pageEnum.instrList:
+                console.log("instructorClassSelection.show()");
+                instructorClassSelection.show();
+                break;
+            case pageEnum.StudentView:
+                studentClassPage.show();
+                break;
+            case pageEnum.StudentList:
+                console.log("studentClassSelection unimplemented");
+                break;
+            default:
+                return;
+        }
+        this.currentPage = newPage;
+    }
 }
 
-class header {
+class header implements view {
     static setup() {
         this.setupListeners();
     }
@@ -115,11 +171,14 @@ class header {
     static logoutClick() {
         console.log("onLogoutClick")
         // goto login page and remove cookie
+        main.deleteCookie();
+        main.switchView(pageEnum.login);
     }
 
     static joinCreateClick() {
         console.log("onJoinCreateClick")
         // goto login page
+        main.switchView(pageEnum.login);
     }
 
     static studentListClick() {
@@ -130,6 +189,7 @@ class header {
     static instrListClick() {
         console.log("onInstrListClick")
         // goto instructor list page
+        main.switchView(pageEnum.instrList);
     }
 }
 
@@ -143,7 +203,7 @@ type joinRequest = {
     person: person;
 };
 
-class loginPage {
+class loginPage implements view {
 
     static setup() {
         this.setupListeners();
@@ -160,8 +220,6 @@ class loginPage {
     }
 
     static show() {
-        (<HTMLElement>document.querySelector("#join")).classList.remove("hidden");
-        (<HTMLElement>document.querySelector("#create")).classList.remove("hidden");
         (<HTMLElement>document.querySelector("#new")).classList.remove("hidden");
     }
 
@@ -266,6 +324,7 @@ class loginPage {
 
     static instrListClick() {
         console.log("onInstrListClick");
+        main.switchView(pageEnum.instrList);
     }
 
     /* login failed request handlers */
@@ -281,21 +340,6 @@ class loginPage {
         console.log("create class error: ", error);
     }
 
-    /* switch view functions */
-    static switchInstructorClassView() {
-        this.hide();
-
-        main.currentPage = pageEnum.instrView;
-        instructorClassPage.show();
-    }
-
-    static switchStudentClassView() {
-        this.hide();
-
-        main.currentPage = pageEnum.StudentView;
-        studentClassPage.show();
-    }
-
     /* API Requests */
     static joinClassRequest(classID: string, reqJSON: joinRequest) {
         let req: XMLHttpRequest = new XMLHttpRequest();
@@ -308,7 +352,7 @@ class loginPage {
                 main.classList.set(res.class.class_id, res.class);
                 main.currentClass = res.class.class_id;
 
-                loginPage.switchStudentClassView();
+                main.switchView(pageEnum.StudentView);
                 return;
             }
             loginPage.joinClassReqFail("Failed to join class");
@@ -337,7 +381,7 @@ class loginPage {
                 main.classList.set(res.class.class_id, res.class);
                 main.currentClass = res.class.class_id;
 
-                loginPage.switchInstructorClassView();
+                main.switchView(pageEnum.instrView);
                 return;
             }
             loginPage.createClassReqFail("Error: Failed to create class");
@@ -392,7 +436,7 @@ function hideInstructorPage() {
     (<HTMLElement>document.querySelector("#instructor_page")).classList.add("hidden");
 }
 
-class instructorClassPage {
+class instructorClassPage implements view {
 
     static questionTemplateFunction: doT.RenderFunction;
 
@@ -744,7 +788,7 @@ class instructorClassPage {
     }
 }
 
-class instructorClassSelection {
+class instructorClassSelection implements view {
 
     static classTemplateFunction: doT.RenderFunction;
 
@@ -761,6 +805,7 @@ class instructorClassSelection {
     }
 
     static show() {
+        header.show();
         displayInstructorPage();
 
         let selectionDiv: HTMLElement = <HTMLElement>document.querySelector("#instructor_class_selection_page");
@@ -774,6 +819,7 @@ class instructorClassSelection {
     }
 
     static hide() {
+        header.hide();
         hideInstructorPage();
 
         (<HTMLElement>document.querySelector("#instr_class_list")).innerHTML = "";
@@ -791,14 +837,9 @@ class instructorClassSelection {
         let cid: string = (<HTMLElement>event.target).id.split("_")[1];
 
         console.log("switchClassClick cid: ", cid);
-        return;
-
-        this.hide();
 
         main.currentClass = cid;
-        main.currentPage = pageEnum.instrView;
-
-        instructorClassPage.show();
+        main.switchView(pageEnum.instrView);
     }
 
     static showClasses() {
@@ -849,7 +890,7 @@ function displayStudentPage() {
     (<HTMLElement>document.querySelector("#student_page")).classList.remove("hidden");
 }
 
-class studentClassPage {
+class studentClassPage implements view {
 
     static questionTemplateFunc: doT.RenderFunction;
 
