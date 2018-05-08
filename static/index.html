@@ -125,9 +125,9 @@
     </script>
     <script id="instructor_class_list_template" type="x-dot-template">
         <ul>
-            {{~value.classes}}
+            {{~it.classes: value}}
             <li>
-                <div id="instrSwitchClass_{{=class.class_id}}">{{=class.class_name}}</div>
+                <div id="instrSwitchClass_{{=value.class_id}}">{{=value.class_name}}</div>
             </li>
             {{~}}
         </ul>
@@ -174,9 +174,9 @@
     </script>
     <script id="student_class_list_template" type="x-dot-template">
         <ul id="student_class_list">
-            {{~value.classes}}
+            {{~it.classes: value}}
             <li>
-                <div id="studentSwitchClass_{{=class.class_id}}">{{=class.class_name}}</div>
+                <div id="studentSwitchClass_{{=value.class_id}}">{{=value.class_name}}</div>
             </li>
             {{~}}
         </ul>
@@ -189,15 +189,14 @@
 <!-- class list -->
     <div id="student_class_selection_page" class="hidden">
         <h3 class="page_subheader">Class list</h3>
-        <div class="class_list" id="student_class_list">
-            'table of classes'
+        <div id="student_class_list">
         </div>
+        <button id="student_class_list_refresh_btn">Refresh list</button>
     </div>
 <!-- class view -->
     <div id="student_class_page" class="hidden">
         <h3 class="page_subheader">Class: name</h3>
         <div class="question_list" id="student_question_list">
-            'table of questions'
         </div>
     </div>
 </div>

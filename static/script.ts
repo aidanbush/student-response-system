@@ -42,7 +42,7 @@ class main {
 
     static username: string;
     static teaches: Class[];
-    static takes: string[];
+    static takes: Class[];
     static classList: Map<string, Class>;
     static currentClass: string;
     static currentPage: pageEnum;
@@ -68,6 +68,9 @@ class main {
 
         studentClassPage.setup();
         instructorClassPage.setup();
+
+        instructorClassSelection.setup()
+        studentClassSelection.setup()
     }
 
     static getQuestion(cid: string, qid: string): question | undefined {
@@ -909,6 +912,10 @@ function displayStudentPage() {
     (<HTMLElement>document.querySelector("#student_page")).classList.remove("hidden");
 }
 
+function hideStudentPage() {
+    (<HTMLElement>document.querySelector("#student_page")).classList.add("hidden");
+}
+
 class studentClassPage implements view {
 
     static questionTemplateFunc: doT.RenderFunction;
@@ -941,6 +948,8 @@ class studentClassPage implements view {
     }
 
     static hide() {
+        hideStudentPage();
+
         let classDiv: HTMLElement = <HTMLElement>document.querySelector("#student_class_page");
         classDiv.classList.add("hidden");
 
@@ -1048,5 +1057,98 @@ class studentClassPage implements view {
         console.log("Submit answer error: ", error);
     }
 }
+
+class studentClassSelection implements view {
+
+    static classTemplateFunction: doT.RenderFunction;
+
+    static setup() {
+        let template: HTMLElement = <HTMLElement>document.querySelector("#student_class_list_template");
+        this.classTemplateFunction = doT.template(template.innerHTML);
+    }
+
+    static setupListeners() {
+        let classList = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='studentSwitchClass_']");
+        for (var i = 0; i < classList.length; ++i) {
+            classList[i].onclick = this.switchClassClick;
+        }
+    }
+
+    static show() {
+        header.show();
+        displayStudentPage();
+
+        let selectionDiv: HTMLElement = <HTMLElement>document.querySelector("#student_class_selection_page");
+        selectionDiv.classList.remove("hidden");
+
+        if (main.takes.length == 0) {
+            this.getClassList();
+        } else {
+            studentClassSelection.showClasses();
+        }
+    }
+
+    static hide() {
+        header.hide();
+        hideStudentPage();
+
+        (<HTMLElement>document.querySelector("#student_class_list")).innerHTML = "";
+        (<HTMLElement>document.querySelector("#student_class_selection_page")).classList.add("hidden");
+    }
+
+    static fillPage() {
+        let classListDiv: HTMLElement = <HTMLElement>document.querySelector("#student_class_list");
+        classListDiv.innerHTML = this.classTemplateFunction(main.classList.get(main.currentClass));
+
+        this.setupListeners();
+    }
+
+    static switchClassClick(event: Event) {
+        let cid: string = (<HTMLElement>event.target).id.split("_")[1];
+
+        console.log("switchClassClick cid: ", cid);
+
+        main.currentClass = cid;
+        main.switchView(pageEnum.StudentView);
+    }
+
+    static showClasses() {
+        let classListDiv: HTMLElement = <HTMLElement>document.querySelector("#student_class_list");
+        classListDiv.innerHTML = this.classTemplateFunction(main.takes);
+
+        this.setupListeners();
+    }
+
+    /* api requests */
+    static getClassList() {
+        let req: XMLHttpRequest = new XMLHttpRequest();
+
+        req.onload = function () {
+            if (req.readyState === 4 && req.status === 200) {
+                let classList: Class[] = JSON.parse(req.responseText);
+                main.takes = classList;
+                studentClassSelection.showClasses();
+                return;
+            }
+            studentClassSelection.requestClassListError("Error: Can't connect to server")
+        };
+
+        req.onerror = function () {
+            studentClassSelection.requestClassListError("Error: Can't connect to server")
+        };
+
+        req.onabort = function () {
+            studentClassSelection.requestClassListError("Error: Can't connect to server")
+        };
+
+        req.open("GET", `/api/v0/classes`);
+        req.send();
+    }
+
+    static requestClassListError(error: string) {
+        console.log("Class list error:", error);
+    }
+}
+
 
 main.setup();
