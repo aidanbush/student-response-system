@@ -125,7 +125,7 @@
     </script>
     <script id="instructor_class_list_template" type="x-dot-template">
         <ul>
-            {{~it.classes: value}}
+            {{~it: value}}
             <li>
                 <div id="instrSwitchClass_{{=value.class_id}}">{{=value.class_name}}</div>
             </li>
@@ -174,7 +174,7 @@
     </script>
     <script id="student_class_list_template" type="x-dot-template">
         <ul id="student_class_list">
-            {{~it.classes: value}}
+            {{~it: value}}
             <li>
                 <div id="studentSwitchClass_{{=value.class_id}}">{{=value.class_name}}</div>
             </li>

@@ -514,6 +514,7 @@ class instructorClassPage implements view {
         req.onload = function () {
             if (req.readyState === 4 && req.status === 200) {
                 let res: question[] = JSON.parse(req.responseText);
+                console.log(res);
                 (<Class>main.classList.get(main.currentClass)).questions = res;
 
                 instructorClassPage.displayQuestions();
@@ -820,6 +821,7 @@ class instructorClassSelection implements view {
     }
 
     static setupListeners() {
+        console.log("instructorClassSelection.setupListeners()");
         let classList = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrSwitchClass_']");
         for (var i = 0; i < classList.length; ++i) {
             classList[i].onclick = this.switchClassClick;
@@ -848,13 +850,6 @@ class instructorClassSelection implements view {
         (<HTMLElement>document.querySelector("#instructor_class_selection_page")).classList.add("hidden");
     }
 
-    static fillPage() {
-        let classListDiv: HTMLElement = <HTMLElement>document.querySelector("#instr_class_list");
-        classListDiv.innerHTML = this.classTemplateFunction(main.classList.get(main.currentClass));
-
-        this.setupListeners();
-    }
-
     static switchClassClick(event: Event) {
         let cid: string = (<HTMLElement>event.target).id.split("_")[1];
 
@@ -865,6 +860,7 @@ class instructorClassSelection implements view {
     }
 
     static showClasses() {
+        console.log("instructorClassSelection.showClasses()");
         let classListDiv: HTMLElement = <HTMLElement>document.querySelector("#instr_class_list");
         classListDiv.innerHTML = this.classTemplateFunction(main.teaches);
 
@@ -879,6 +875,18 @@ class instructorClassSelection implements view {
             if (req.readyState === 4 && req.status === 200) {
                 let classList: Class[] = JSON.parse(req.responseText);
                 main.teaches = classList;
+
+                for (var i = 0; i < classList.length; i++) {
+                    if (main.classList.get(classList[i].class_id) === undefined) {
+                        let newClass: Class = {
+                            class_name: classList[i].class_name,
+                            class_id: classList[i].class_id,
+                            questions: []
+                        };
+                        main.classList.set(newClass.class_id, newClass);
+                    }
+                }
+
                 instructorClassSelection.showClasses();
                 return;
             }
@@ -1096,13 +1104,6 @@ class studentClassSelection implements view {
         (<HTMLElement>document.querySelector("#student_class_selection_page")).classList.add("hidden");
     }
 
-    static fillPage() {
-        let classListDiv: HTMLElement = <HTMLElement>document.querySelector("#student_class_list");
-        classListDiv.innerHTML = this.classTemplateFunction(main.classList.get(main.currentClass));
-
-        this.setupListeners();
-    }
-
     static switchClassClick(event: Event) {
         let cid: string = (<HTMLElement>event.target).id.split("_")[1];
 
@@ -1127,6 +1128,18 @@ class studentClassSelection implements view {
             if (req.readyState === 4 && req.status === 200) {
                 let classList: Class[] = JSON.parse(req.responseText);
                 main.takes = classList;
+
+                for (var i = 0; i < classList.length; i++) {
+                    if (main.classList.get(classList[i].class_id) === undefined) {
+                        let newClass: Class = {
+                            class_name: classList[i].class_name,
+                            class_id: classList[i].class_id,
+                            questions: []
+                        };
+                        main.classList.set(newClass.class_id, newClass);
+                    }
+                }
+
                 studentClassSelection.showClasses();
                 return;
             }
