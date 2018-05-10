@@ -50,11 +50,7 @@ class main {
     static setup() {
         this.setupListeners();
 
-        this.username = "";
-        this.teaches = [];
-        this.takes = [];
-        this.classList = new Map<string, Class>();
-        this.currentClass = "";
+        this.resetUser();
         this.currentPage = pageEnum.login;
 
         loginPage.show();
@@ -92,13 +88,26 @@ class main {
             if (req.readyState === 4 && req.status === 200) {
                 let person: person = JSON.parse(req.responseText);
                 main.username = person.name;
-                loginPage.setNameHeader();
+                loginPage.setHeader();
                 return;
             }
         };
 
         req.open("GET", `/api/v0/person`);
         req.send();
+    }
+
+    static resetUser() {
+        this.username = '';
+        this.teaches = [];
+        this.takes = [];
+        this.classList = new Map<string, Class>();
+        this.currentClass = "";
+    }
+
+    static logout() {
+        this.deleteCookie();
+        this.resetUser();
     }
 
     static deleteCookie() {
@@ -110,10 +119,8 @@ class main {
     }
 
     static switchView(newPage: pageEnum) {
-        console.log("switchView", newPage);
         switch (this.currentPage) {
             case pageEnum.login:
-                console.log("loginPage.hide()");
                 loginPage.hide();
                 break;
             case pageEnum.instrView:
@@ -126,7 +133,7 @@ class main {
                 studentClassPage.hide();
                 break;
             case pageEnum.StudentList:
-                console.log("studentClassSelection unimplemented");
+                studentClassSelection.hide();
                 break;
             default:
                 console.log("hide default");
@@ -143,16 +150,16 @@ class main {
                 instructorClassPage.show();
                 break;
             case pageEnum.instrList:
-                console.log("instructorClassSelection.show()");
                 instructorClassSelection.show();
                 break;
             case pageEnum.StudentView:
                 studentClassPage.show();
                 break;
             case pageEnum.StudentList:
-                console.log("studentClassSelection unimplemented");
+                studentClassSelection.show();
                 break;
             default:
+                console.log("show default");
                 return;
         }
     }
@@ -187,26 +194,19 @@ class header implements view {
     }
 
     static logoutClick() {
-        console.log("onLogoutClick")
-
-        main.deleteCookie();
+        main.logout();
         main.switchView(pageEnum.login);
     }
 
     static joinCreateClick() {
-        console.log("onJoinCreateClick")
-
         main.switchView(pageEnum.login);
     }
 
     static studentListClick() {
-        console.log("onStudentListClick")
-        // goto student class list page
+        main.switchView(pageEnum.StudentList);
     }
 
     static instrListClick() {
-        console.log("onInstrListClick")
-
         main.switchView(pageEnum.instrList);
     }
 }
@@ -242,6 +242,7 @@ class loginPage implements view {
         if (main.hasCookie()) {
             (<HTMLElement>document.querySelector("#class_list_btns")).classList.remove("hidden");
         }
+        this.setHeader();
     }
 
     static hide() {
@@ -282,8 +283,6 @@ class loginPage implements view {
     }
 
     static joinClassBtnClick() {
-        console.log("onJoinClassBtnClick");
-
         let classIDInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#join_class_id");
         if (classIDInput.value === "") {
             loginPage.joinClassReqFail("Error: Requires class ID");
@@ -310,8 +309,6 @@ class loginPage implements view {
     }
 
     static createClassBtnClick() {
-        console.log("onCreateClassBtnClick")
-
         let classNameInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#new_class_name");
         if (classNameInput.value === "") {
             loginPage.createClassReqFail("Error: Requires class name");
@@ -341,11 +338,10 @@ class loginPage implements view {
     }
 
     static studentListClick() {
-        console.log("onStudentListClick");
+        main.switchView(pageEnum.StudentList);
     }
 
     static instrListClick() {
-        console.log("onInstrListClick");
         main.switchView(pageEnum.instrList);
     }
 
@@ -369,7 +365,6 @@ class loginPage implements view {
         req.onload = function () {
             if (req.readyState === 4 && req.status === 200) {
                 let res: createRequest = JSON.parse(req.responseText);
-                console.log("join class req success", res);
 
                 main.classList.set(res.class.class_id, res.class);
                 main.currentClass = res.class.class_id;
@@ -390,7 +385,6 @@ class loginPage implements view {
 
         req.open("POST", `/api/v0/classes/${encodeURI(classID)}`);
         req.send(JSON.stringify(reqJSON));
-        console.log(reqJSON);
     }
 
     static createClassRequest(reqJSON: createRequest) {
@@ -419,7 +413,6 @@ class loginPage implements view {
 
         req.open("POST", `/api/v0/classes`);
         req.send(JSON.stringify(reqJSON));
-        console.log(reqJSON);
     }
 
     /* view updating */
@@ -473,8 +466,6 @@ class instructorClassPage implements view {
 
         this.answerListeners();
 
-        console.log("add create question listener");
-
         let createQuestion: HTMLElement = <HTMLElement>document.querySelector("#instr_new_question_btn");
         createQuestion.onclick = this.createQuestionClick;
     }
@@ -514,7 +505,7 @@ class instructorClassPage implements view {
         req.onload = function () {
             if (req.readyState === 4 && req.status === 200) {
                 let res: question[] = JSON.parse(req.responseText);
-                console.log(res);
+
                 (<Class>main.classList.get(main.currentClass)).questions = res;
 
                 instructorClassPage.displayQuestions();
@@ -624,7 +615,6 @@ class instructorClassPage implements view {
 
     static deleteQuestionClick(event: Event) {
         let qid: string = (<HTMLElement>event.target).id.split("_")[1]
-        console.log("delete question: ", qid);
 
         let req: XMLHttpRequest = new XMLHttpRequest();
 
@@ -673,7 +663,6 @@ class instructorClassPage implements view {
             if (req.readyState === 4 && req.status === 200) {
                 let res: answer = JSON.parse(req.responseText);
                 (<question>(<Class>main.classList.get(main.currentClass)).questions.find(question => question.question_id === qid)).answers.push(res);
-                console.log("create question req success", res);
 
                 instructorClassPage.instructorViewAddAnswer(res);
                 return;
@@ -695,7 +684,6 @@ class instructorClassPage implements view {
 
     static publicQuestionClick(event: Event) {
         let qid: string = (<HTMLElement>event.target).id.split("_")[1]
-        console.log("make public question: ", qid);
 
         let reqJSON: question = Object.assign({}, main.getQuestion(main.currentClass, qid));
         reqJSON.public = true;
@@ -754,7 +742,6 @@ class instructorClassPage implements view {
 
     static deleteAnswerClick(event: Event) {
         let [, qid, aid]: string[] = (<HTMLElement>event.target).id.split("_");
-        console.log("delete question, answer: ", qid, ", ", aid);
 
         let req: XMLHttpRequest = new XMLHttpRequest();
 
@@ -821,7 +808,8 @@ class instructorClassSelection implements view {
     }
 
     static setupListeners() {
-        console.log("instructorClassSelection.setupListeners()");
+        (<HTMLButtonElement>document.querySelector("#instr_class_list_refresh_btn")).onclick = this.refreshClassesClick;
+
         let classList = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='instrSwitchClass_']");
         for (var i = 0; i < classList.length; ++i) {
             classList[i].onclick = this.switchClassClick;
@@ -850,17 +838,18 @@ class instructorClassSelection implements view {
         (<HTMLElement>document.querySelector("#instructor_class_selection_page")).classList.add("hidden");
     }
 
+    static refreshClassesClick() {
+        instructorClassSelection.getClassList();
+    }
+
     static switchClassClick(event: Event) {
         let cid: string = (<HTMLElement>event.target).id.split("_")[1];
-
-        console.log("switchClassClick cid: ", cid);
 
         main.currentClass = cid;
         main.switchView(pageEnum.instrView);
     }
 
     static showClasses() {
-        console.log("instructorClassSelection.showClasses()");
         let classListDiv: HTMLElement = <HTMLElement>document.querySelector("#instr_class_list");
         classListDiv.innerHTML = this.classTemplateFunction(main.teaches);
 
@@ -929,8 +918,6 @@ class studentClassPage implements view {
     static questionTemplateFunc: doT.RenderFunction;
 
     static setup() {
-        console.log("studentClassPage setup");
-
         let template: HTMLElement = <HTMLElement>document.querySelector("#student_class_page_template");
         this.questionTemplateFunc = doT.template(template.innerHTML);
     }
@@ -1076,6 +1063,8 @@ class studentClassSelection implements view {
     }
 
     static setupListeners() {
+        (<HTMLElement>document.querySelector("#student_class_list_refresh_btn")).onclick = this.refreshClassesClick;
+
         let classList = <NodeListOf<HTMLElement>>document.querySelectorAll("[id^='studentSwitchClass_']");
         for (var i = 0; i < classList.length; ++i) {
             classList[i].onclick = this.switchClassClick;
@@ -1107,10 +1096,12 @@ class studentClassSelection implements view {
     static switchClassClick(event: Event) {
         let cid: string = (<HTMLElement>event.target).id.split("_")[1];
 
-        console.log("switchClassClick cid: ", cid);
-
         main.currentClass = cid;
         main.switchView(pageEnum.StudentView);
+    }
+
+    static refreshClassesClick() {
+        studentClassSelection.getClassList();
     }
 
     static showClasses() {
