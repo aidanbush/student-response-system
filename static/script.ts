@@ -88,7 +88,7 @@ class main {
             if (req.readyState === 4 && req.status === 200) {
                 let person: person = JSON.parse(req.responseText);
                 main.username = person.name;
-                loginPage.setHeader();
+                loginPage.refresh();
                 return;
             }
         };
@@ -251,6 +251,12 @@ class loginPage implements view {
     }
 
     static hide() {
+        this.hideIDs();
+
+        this.clearInputs();
+    }
+
+    static hideIDs() {
         (<HTMLElement>document.querySelector("#new")).classList.add("hidden");
         (<HTMLElement>document.querySelector("#join")).classList.add("hidden");
         (<HTMLElement>document.querySelector("#create")).classList.add("hidden");
@@ -260,16 +266,19 @@ class loginPage implements view {
 
         (<HTMLElement>document.querySelector("#student_name")).classList.add("hidden");
         (<HTMLElement>document.querySelector("#instructor_name")).classList.add("hidden");
+    }
 
-        this.clearInputs();
+    static refresh() {
+        this.hideIDs();
+        this.show();
     }
 
     static clearInputs() {
         (<HTMLInputElement>document.querySelector("#join_class_id")).value = '';
-        (<HTMLInputElement>document.querySelector("#student_name")).value = '';
+        (<HTMLInputElement>document.querySelector("#student_name_input")).value = '';
 
         (<HTMLInputElement>document.querySelector("#new_class_name")).value = '';
-        (<HTMLInputElement>document.querySelector("#instructor_name")).value = '';
+        (<HTMLInputElement>document.querySelector("#instructor_name_input")).value = '';
     }
 
     static joinClick() {
@@ -311,7 +320,7 @@ class loginPage implements view {
 
         let classID = classIDInput.value;
 
-        let nameInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#student_name");
+        let nameInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#student_name_input");
         if (nameInput.value === "" && main.username === "") {
             loginPage.joinClassReqFail("Error: Requires your name");
             return;
@@ -335,7 +344,7 @@ class loginPage implements view {
             return;
         }
 
-        let nameInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#instructor_name");
+        let nameInput: HTMLInputElement = <HTMLInputElement>document.querySelector("#instructor_name_input");
         if (nameInput.value === "" && main.username === "") {
             loginPage.createClassReqFail("Error: Requires your name");
             return;
