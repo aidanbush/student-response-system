@@ -242,14 +242,34 @@ class loginPage implements view {
         if (main.hasCookie()) {
             (<HTMLElement>document.querySelector("#class_list_btns")).classList.remove("hidden");
         }
+        // fix
+        if (main.username === '') {
+            (<HTMLElement>document.querySelector("#student_name")).classList.remove("hidden");
+            (<HTMLElement>document.querySelector("#instructor_name")).classList.remove("hidden");
+        }
         this.setHeader();
     }
 
     static hide() {
+        (<HTMLElement>document.querySelector("#new")).classList.add("hidden");
         (<HTMLElement>document.querySelector("#join")).classList.add("hidden");
         (<HTMLElement>document.querySelector("#create")).classList.add("hidden");
-        (<HTMLElement>document.querySelector("#new")).classList.add("hidden");
+
         (<HTMLElement>document.querySelector("#class_list_btns")).classList.add("hidden");
+        (<HTMLElement>document.querySelector("#list_classes")).classList.add("hidden");
+
+        (<HTMLElement>document.querySelector("#student_name")).classList.add("hidden");
+        (<HTMLElement>document.querySelector("#instructor_name")).classList.add("hidden");
+
+        this.clearInputs();
+    }
+
+    static clearInputs() {
+        (<HTMLInputElement>document.querySelector("#join_class_id")).value = '';
+        (<HTMLInputElement>document.querySelector("#student_name")).value = '';
+
+        (<HTMLInputElement>document.querySelector("#new_class_name")).value = '';
+        (<HTMLInputElement>document.querySelector("#instructor_name")).value = '';
     }
 
     static joinClick() {
