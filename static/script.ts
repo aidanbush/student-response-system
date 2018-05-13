@@ -487,7 +487,7 @@ type response = {
 }
 
 function displayInstructorPage() {
-    (<HTMLElement>document.querySelector("#instructor_display_name")).innerHTML = `Hello ${main.username}`;
+    (<HTMLElement>document.querySelector("#instructor_display_name")).innerHTML = `Instructor: ${main.username}`;
     (<HTMLElement>document.querySelector("#instructor_page")).classList.remove("hidden");
 }
 
@@ -949,7 +949,7 @@ type answerRequest = {
 };
 
 function displayStudentPage() {
-    (<HTMLElement>document.querySelector("#student_display_name")).innerHTML = `Hello ${main.username}`;
+    (<HTMLElement>document.querySelector("#student_display_name")).innerHTML = `Student: ${main.username}`;
     (<HTMLElement>document.querySelector("#student_page")).classList.remove("hidden");
 }
 

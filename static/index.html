@@ -140,9 +140,9 @@
         </div>
     </script>
     <script id="instructor_class_list_template" type="x-dot-template">
-        <ul>
+        <ul class="list-group">
             {{~it: value}}
-            <li>
+            <li class="list-group-item">
                 <div id="instrSwitchClass_{{=value.class_id}}">{{=value.class_name}}</div>
             </li>
             {{~}}
@@ -150,18 +150,19 @@
     </script>
 <!-- page contents -->
     <div class="page_header">
-        <h2>Instructor</h2>
-        <h3 id="instructor_display_name">Hello: name</h3>
-    </div>
-<!-- class list -->
-    <div id="instructor_class_selection_page" class="hidden">
-        <h3 class="page_subheader">Class list</h3>
-        <div id="instr_class_list">
+        <h2 id="instructor_display_name">Instructor: name</h2>
+        <div>
+        <!-- class list -->
+            <div id="instructor_class_selection_page" class="hidden container">
+                <h4 class="page_subheader">Class list</h4>
+                <div id="instr_class_list" class="mb-2">
+                </div>
+                <button id="instr_class_list_refresh_btn" class="btn btn-primary mb-2">Refresh list</button>
+            </div>
+        <!-- class view -->
+            <div id="instructor_class_page" class="hidden">
+            </div>
         </div>
-        <button id="instr_class_list_refresh_btn">Refresh list</button>
-    </div>
-<!-- class view -->
-    <div id="instructor_class_page" class="hidden">
     </div>
 </div>
 
@@ -189,9 +190,9 @@
         </div>
     </script>
     <script id="student_class_list_template" type="x-dot-template">
-        <ul id="student_class_list">
+        <ul id="student_class_list" class="list-group">
             {{~it: value}}
-            <li>
+            <li class="list-group-item">
                 <div id="studentSwitchClass_{{=value.class_id}}">{{=value.class_name}}</div>
             </li>
             {{~}}
@@ -199,20 +200,21 @@
     </script>
 <!-- page contents -->
     <div class="page_header">
-        <h2>Student</h2>
-        <h3 id="student_display_name">Hello: name</h3>
-    </div>
-<!-- class list -->
-    <div id="student_class_selection_page" class="hidden">
-        <h3 class="page_subheader">Class list</h3>
-        <div id="student_class_list">
-        </div>
-        <button id="student_class_list_refresh_btn">Refresh list</button>
-    </div>
-<!-- class view -->
-    <div id="student_class_page" class="hidden">
-        <h3 class="page_subheader">Class: name</h3>
-        <div class="question_list" id="student_question_list">
+        <h2 id="student_display_name">Student: name</h2>
+        <div>
+        <!-- class list -->
+            <div id="student_class_selection_page" class="hidden container">
+                <h4 class="page_subheader">Class list</h4>
+                <div id="student_class_list" class="mb-2">
+                </div>
+                <button id="student_class_list_refresh_btn" class="btn btn-primary mb-2">Refresh list</button>
+            </div>
+        <!-- class view -->
+            <div id="student_class_page" class="hidden">
+                <h3 class="page_subheader">Class: name</h3>
+                <div class="question_list" id="student_question_list">
+                </div>
+            </div>
         </div>
     </div>
 </div>
