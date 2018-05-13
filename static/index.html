@@ -107,35 +107,47 @@
     <script id="instructor_class_page_template" type="x-dot-template">
         <h3 class="page_subheader">Class: {{=it.class_name}} ({{=it.class_id}})</h3>
         <div class="question_list">
-            <ul id="instr_question_list">
+            <ul id="instr_question_list" class="list-group">
             {{~it.questions :value}}
-                <li class="question">
+                <li class="list-group-item mb-2">
                     <div class="question_name">{{=value.question_title}}</div>
-                    <ul id="ansList_{{=value.question_id}}">
+                    <ul id="ansList_{{=value.question_id}}" class="list-group mb-2">
                         {{~value.answers :answer}}
-                        <li>
+                        <li class="list-group-item">
                             <div>{{=answer.answer_text}}</div>
-                            <button class="answer_delete_btn" id="ansDel_{{=value.question_id}}_{{=answer.answer_id}}">delete answer</button>
+                            <button id="ansDel_{{=value.question_id}}_{{=answer.answer_id}}" class="btn btn-danger">delete answer</button>
                         </li>
                         {{~}}
                     </ul>
+                    <div class="input-group mb-2">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Enter answer:</span>
+                        </div>
+                        <textarea id="instrQuestionAddText_{{=value.question_id}}" class="form-control"></textarea>
+                        <div class="input-group-append">
+                            <button id="instrQuestionAdd_{{=value.question_id}}" class="btn btn-primary">add answer</button>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button id="instrQuestionDel_{{=value.question_id}}" class="btn btn-danger">delete question</button>
+                        {{?value.public === undefined || value.public === false}}
+                            <button id="instrQuestionPub_{{=value.question_id}}" class="btn btn-warning">make public</button>
+                        {{?}}
+                        <button id="instrQuestionRes_{{=value.question_id}}" class="btn btn-info">view results</button>
+                    </div>
                 </li>
-                    Enter answer:
-                    <input type="text" name="test" id="instrQuestionAddText_{{=value.question_id}}">
-                    <br>
-                    <button id="instrQuestionAdd_{{=value.question_id}}">add answer</button>
-                    <button id="instrQuestionDel_{{=value.question_id}}">delete question</button>
-                    {{?value.public === undefined || value.public === false}}
-                        <button id="instrQuestionPub_{{=value.question_id}}">make public</button>
-                    {{?}}
-                    <button id="instrQuestionRes_{{=value.question_id}}">view results</button>
             {{~}}
             </ul>
             <div id="instr_new_question">
-                Question Name:
-                <br>
-                <input type="text" id="instr_new_question_name">
-                <button id="instr_new_question_btn">create new question</button>
+                <div class="input-group mb-2">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text">Question Name:</span>
+                    </div>
+                    <textarea id="instr_new_question_name" class="form-control"></textarea>
+                    <div class="input-group-append">
+                        <button id="instr_new_question_btn" class="btn btn-primary">create new question</button>
+                    </div>
+                </div>
             </div>
         </div>
     </script>
@@ -172,21 +184,19 @@
     <script id="student_class_page_template" type="x-dot-template">
         <h3 class="page_subheader">Class: {{=it.class_name}} ({{=it.class_id}})</h3>
         <div class="question_list">
-            <ul id="student_question_list">
+            <ul id="student_question_list" class="list-group">
             {{~it.questions :value}}
-                <li class="question">
+                <li class="list-group-item">
                     <div class="question_name">{{=value.question_title}}</div>
-                    <ul id="ansList_{{=value.question_id}}">
+                    <ul id="ansList_{{=value.question_id}}" class="list-group">
                         {{~value.answers :answer}}
-                        <li>
-                            <div id="ansSel_{{=value.question_id}}_{{=answer.answer_id}}">{{=answer.answer_text}}</div>
-                        </li>
+                        <li id="ansSel_{{=value.question_id}}_{{=answer.answer_id}}" class="list-group-item">{{=answer.answer_text}}</li>
                         {{~}}
                     </ul>
                 </li>
             {{~}}
             </ul>
-            <button id="student_refresh_questions">Refresh questions</button>
+            <button id="student_refresh_questions" class="btn btn-primary mb-5">Refresh questions</button>
         </div>
     </script>
     <script id="student_class_list_template" type="x-dot-template">

@@ -1040,7 +1040,7 @@ class studentClassPage implements view {
 
         let currentAnswer: string = question.selected_answer;
         if (currentAnswer !== "") {
-            (<HTMLElement>document.querySelector(`#ansSel_${qid}_${currentAnswer}`)).classList.remove("selected-answer");
+            (<HTMLElement>document.querySelector(`#ansSel_${qid}_${currentAnswer}`)).classList.remove("active");
         }
         question.selected_answer = aid;
 
@@ -1048,7 +1048,7 @@ class studentClassPage implements view {
     }
 
     static SetSelectAnswer(qid: string, aid: string) {
-        (<HTMLElement>document.querySelector(`#ansSel_${qid}_${aid}`)).classList.add("selected-answer");
+        (<HTMLElement>document.querySelector(`#ansSel_${qid}_${aid}`)).classList.add("active");
     }
 
     /* listeners */
