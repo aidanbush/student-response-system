@@ -179,11 +179,14 @@ class header implements view {
 
     static show() {
         (<HTMLElement>document.querySelector("#header_buttons")).classList.remove("hidden");
-        if (main.currentPage !== pageEnum.instrList) {
+        if (main.currentPage !== pageEnum.instrList && main.teaches.length !== 0) {
             (<HTMLElement>document.querySelector("#header_instr_class_list_btn")).classList.remove("hidden");
         }
-        if (main.currentPage !== pageEnum.StudentList) {
+        if (main.currentPage !== pageEnum.StudentList && main.takes.length !== 0) {
             (<HTMLElement>document.querySelector("#header_student_class_list_btn")).classList.remove("hidden");
+        }
+        if (main.hasCookie()) {
+            (<HTMLElement>document.querySelector("#header_logout_btn")).classList.remove("hidden");
         }
     }
 
@@ -191,6 +194,7 @@ class header implements view {
         (<HTMLElement>document.querySelector("#header_buttons")).classList.add("hidden");
         (<HTMLElement>document.querySelector("#header_instr_class_list_btn")).classList.add("hidden");
         (<HTMLElement>document.querySelector("#header_student_class_list_btn")).classList.add("hidden");
+        (<HTMLElement>document.querySelector("#header_logout_btn")).classList.add("hidden");
     }
 
     static logoutClick() {
@@ -248,12 +252,16 @@ class loginPage implements view {
             (<HTMLElement>document.querySelector("#instructor_name")).classList.remove("hidden");
         }
         this.setHeader();
+
+        header.show();
     }
 
     static hide() {
         this.hideIDs();
 
         this.clearInputs();
+
+        header.hide();
     }
 
     static hideIDs() {
@@ -266,6 +274,9 @@ class loginPage implements view {
 
         (<HTMLElement>document.querySelector("#student_name")).classList.add("hidden");
         (<HTMLElement>document.querySelector("#instructor_name")).classList.add("hidden");
+
+        (<HTMLElement>document.querySelector("#join_input_error")).classList.add("hidden");
+        (<HTMLElement>document.querySelector("#new_input_error")).classList.add("hidden");
     }
 
     static refresh() {
@@ -376,12 +387,14 @@ class loginPage implements view {
 
     /* login failed request handlers */
     static joinClassReqFail(error: string) {
+        (<HTMLElement>document.querySelector("#join_input_error")).classList.remove("hidden");
         (<HTMLElement>document.querySelector("#join_input_error")).innerHTML = error;
 
         console.log("join class error: ", error);
     }
 
     static createClassReqFail(error: string) {
+        (<HTMLElement>document.querySelector("#new_input_error")).classList.remove("hidden");
         (<HTMLElement>document.querySelector("#new_input_error")).innerHTML = error;
 
         console.log("create class error: ", error);

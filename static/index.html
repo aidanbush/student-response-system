@@ -2,63 +2,76 @@
 <html>
 <head>
     <title>Student Assessment</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
     <link rel="stylesheet" href="static/style.css">
 </head>
 <body>
-<div id="title_header">
+<!--
+<div id="title_header" class="container-fluid">
     <h1>Student Assessment</h1>
 </div>
-<div id="header_buttons" class="hidden">
-    <div id="header_logout_btn">Logout</div>
-    <div id="header_join_create_btn">Join/Create Classes</div>
-    <div id="header_student_class_list_btn" class="hidden">Enrolled Classes</div>
-    <div id="header_instr_class_list_btn" class="hidden">Teaching Classes</div>
+-->
+<div id="header_buttons">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <h1 class="navbar-brand">Student Assessment</h1>
+
+        <ul class="navbar-nav">
+            <li id="header_join_create_btn" class="nav-item nav-link">Join/Create Classes</li>
+            <li id="header_student_class_list_btn" class="hidden nav-item nav-link">Enrolled Classes</li>
+            <li id="header_instr_class_list_btn" class="hidden nav-item nav-link">Teaching Classes</li>
+            <li id="header_logout_btn" class="hidden nav-item nav-link">Logout</li>
+        </ul>
+    </nav>
 </div>
 
 <!-- Login page -->
-<div id="new" class="hidden">
+<div id="new" class="hidden container">
 <!-- page doT templates -->
 <!-- page contents -->
     <div class="page_header">
         <h2 id="login_header">Login</h2>
     </div>
 <!-- join class -->
-    <h4 id="join_heading">Join Class</h4>
-    <div id="join" class="hidden">
-        <div id="join_input">
-            <div class="class_name">
-                Class ID:
+    <div>
+        <h4 id="join_heading" class="btn btn-light">Join Class</h4>
+        <div id="join" class="hidden">
+            <div id="join_input">
+                <div class="class_name">
+                    Class ID:
+                    <br>
+                    <input type="text" id="join_class_id">
+                </div>
+                <div id="student_name" class="hidden">
+                    Name:
+                    <br>
+                    <input type="text" id="student_name_input">
+                </div>
                 <br>
-                <input type="text" id="join_class_id">
+                <button id="join_class_btn" class="btn btn-primary">Join class</button>
             </div>
-            <div id="student_name" class="person_name" class="hidden">
-                Name:
-                <br>
-                <input type="text" id="student_name_input">
-            </div>
-            <br>
-            <button id="join_class_btn">Join class</button>
+            <div id="join_input_error" class="hidden alert alert-danger"></div>
         </div>
-        <div id="join_input_error"></div>
     </div>
 <!-- create class -->
-    <h4 id="create_heading">Create Class</h4>
-    <div id="create" class="hidden">
-        <div id="new_input">
-            <div class="class_name">
-                Class Name:
+    <div>
+        <h4 id="create_heading" class="btn btn-light">Create Class</h4>
+        <div id="create" class="hidden">
+            <div id="new_input">
+                <div class="class_name">
+                    Class Name:
+                    <br>
+                    <input type="text" id="new_class_name">
+                </div>
+                <div id="instructor_name" class="hidden">
+                    Name:
+                    <br>
+                    <input type="text" id="instructor_name_input">
+                </div>
                 <br>
-                <input type="text" id="new_class_name">
+                <button id="new_class_btn" class="btn btn-primary">Create class</button>
             </div>
-            <div id="instructor_name" class="person_name" class="hidden">
-                Name:
-                <br>
-                <input type="text" id="instructor_name_input">
-            </div>
-            <br>
-            <button id="new_class_btn">Create class</button>
+            <div id="new_input_error" class="hidden alert alert-danger"></div>
         </div>
-        <div id="new_input_error"></div>
     </div>
 <!-- class list buttons -->
     <div id="class_list_btns" class="hidden">
@@ -72,7 +85,7 @@
 
 
 <!-- Instructor pages -->
-<div id="instructor_page" class="hidden">
+<div id="instructor_page" class="hidden container">
 <!-- page doT templates -->
     <script id="instructor_page_answer_results" type="x-dot-template">
         <table>
@@ -150,7 +163,7 @@
 </div>
 
 <!-- Student pages -->
-<div id="student_page" class="hidden">
+<div id="student_page" class="hidden container">
 <!-- page doT templates -->
     <script id="student_class_page_template" type="x-dot-template">
         <h3 class="page_subheader">Class: {{=it.class_name}} ({{=it.class_id}})</h3>
