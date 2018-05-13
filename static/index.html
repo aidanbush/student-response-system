@@ -6,11 +6,6 @@
     <link rel="stylesheet" href="static/style.css">
 </head>
 <body>
-<!--
-<div id="title_header" class="container-fluid">
-    <h1>Student Assessment</h1>
-</div>
--->
 <div id="header_buttons">
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <h1 class="navbar-brand">Student Assessment</h1>
@@ -31,54 +26,62 @@
     <div class="page_header">
         <h2 id="login_header">Login</h2>
     </div>
-<!-- join class -->
-    <div>
-        <h4 id="join_heading" class="btn btn-light">Join Class</h4>
-        <div id="join" class="hidden">
-            <div id="join_input">
-                <div class="class_name">
-                    Class ID:
-                    <br>
-                    <input type="text" id="join_class_id">
+    <div class="container">
+    <!-- join class -->
+        <div class="row mb-2">
+            <div>
+                <h4 id="join_heading" class="btn btn-light">Join Class</h4>
+                <div id="join" class="hidden container">
+                    <div id="join_input" class="mb-2">
+                        <div class="class_name">
+                            Class ID:
+                            <br>
+                            <input type="text" id="join_class_id">
+                        </div>
+                        <div id="student_name" class="hidden">
+                            Name:
+                            <br>
+                            <input type="text" id="student_name_input">
+                        </div>
+                    </div>
+                    <button id="join_class_btn" class="btn btn-primary mb-2">Join class</button>
+                    <div id="join_input_error" class="hidden alert alert-danger"></div>
                 </div>
-                <div id="student_name" class="hidden">
-                    Name:
-                    <br>
-                    <input type="text" id="student_name_input">
-                </div>
-                <br>
-                <button id="join_class_btn" class="btn btn-primary">Join class</button>
             </div>
-            <div id="join_input_error" class="hidden alert alert-danger"></div>
         </div>
-    </div>
-<!-- create class -->
-    <div>
-        <h4 id="create_heading" class="btn btn-light">Create Class</h4>
-        <div id="create" class="hidden">
-            <div id="new_input">
-                <div class="class_name">
-                    Class Name:
-                    <br>
-                    <input type="text" id="new_class_name">
+    <!-- create class -->
+        <div class="row mb-2">
+            <div>
+                <h4 id="create_heading" class="btn btn-light">Create Class</h4>
+                <div id="create" class="hidden container">
+                    <div id="new_input" class="mb-2">
+                        <div class="class_name">
+                            Class Name:
+                            <br>
+                            <input type="text" id="new_class_name">
+                        </div>
+                        <div id="instructor_name" class="hidden">
+                            Name:
+                            <br>
+                            <input type="text" id="instructor_name_input">
+                        </div>
+                    </div>
+                    <button id="new_class_btn" class="btn btn-primary mb-2">Create class</button>
+                    <div id="new_input_error" class="hidden alert alert-danger"></div>
                 </div>
-                <div id="instructor_name" class="hidden">
-                    Name:
-                    <br>
-                    <input type="text" id="instructor_name_input">
-                </div>
-                <br>
-                <button id="new_class_btn" class="btn btn-primary">Create class</button>
             </div>
-            <div id="new_input_error" class="hidden alert alert-danger"></div>
         </div>
-    </div>
-<!-- class list buttons -->
-    <div id="class_list_btns" class="hidden">
-        <h4 id="class_list_heading">Class Lists</h4>
-        <div id="list_classes" class="hidden">
-            <button id="student_class_list_button">Student class list</button>
-            <button id="instr_class_list_button">Instructor class list</button>
+    <!-- class list buttons -->
+        <div class="row pb-2">
+            <div id="class_list_btns" class="hidden">
+                <h4 id="class_list_heading" class="btn btn-light">Class Lists</h4>
+                <br>
+                <div id="list_classes" class="hidden container">
+                    <button id="student_class_list_button" class="btn btn-primary mb-2">Student class list</button>
+                    <br>
+                    <button id="instr_class_list_button" class="btn btn-primary mb-2">Instructor class list</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
