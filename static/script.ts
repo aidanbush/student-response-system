@@ -178,7 +178,9 @@ class header implements view {
     }
 
     static show() {
-        (<HTMLElement>document.querySelector("#header_buttons")).classList.remove("hidden");
+        if (main.currentPage !== pageEnum.login) {
+            (<HTMLElement>document.querySelector("#header_join_create_btn")).classList.remove("hidden");
+        }
         if (main.currentPage !== pageEnum.instrList && main.teaches.length !== 0) {
             (<HTMLElement>document.querySelector("#header_instr_class_list_btn")).classList.remove("hidden");
         }
@@ -191,7 +193,7 @@ class header implements view {
     }
 
     static hide() {
-        (<HTMLElement>document.querySelector("#header_buttons")).classList.add("hidden");
+        (<HTMLElement>document.querySelector("#header_join_create_btn")).classList.add("hidden");
         (<HTMLElement>document.querySelector("#header_instr_class_list_btn")).classList.add("hidden");
         (<HTMLElement>document.querySelector("#header_student_class_list_btn")).classList.add("hidden");
         (<HTMLElement>document.querySelector("#header_logout_btn")).classList.add("hidden");
