@@ -116,6 +116,11 @@
                         <li class="list-group-item">
                             <div>{{=answer.answer_text}}</div>
                             <button id="ansDel_{{=value.question_id}}_{{=answer.answer_id}}" class="btn btn-danger">delete answer</button>
+                            {{? value.responses > 0}}
+                            <div class="progress">
+                                <div class="progress-bar" style="width: {{=answer.count / value.responses * 100}}%"></div>
+                            </div>
+                            {{?}}
                         </li>
                         {{~}}
                     </ul>
@@ -154,9 +159,7 @@
     <script id="instructor_class_list_template" type="x-dot-template">
         <ul class="list-group">
             {{~it: value}}
-            <li class="list-group-item">
-                <div id="instrSwitchClass_{{=value.class_id}}">{{=value.class_name}}</div>
-            </li>
+                <li id="instrSwitchClass_{{=value.class_id}}" class="list-group-item">{{=value.class_name}}</li>
             {{~}}
         </ul>
     </script>

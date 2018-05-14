@@ -18,6 +18,7 @@ type answer struct {
 	AnswerID   string `json:"answer_id" db:"aid"`
 	AnswerText string `json:"answer_text" db:"answer"`
 	QuestionID string `json:"question_id" db:"qid"`
+	Count      int    `json:"count"`
 }
 
 type response struct {
@@ -548,13 +549,17 @@ func fillAnswers(question *question) error {
 		return err
 	}
 
-	answer := answer{}
+	newAnswer := answer{}
 	for rows.Next() {
-		err = rows.StructScan(&answer)
+		err = rows.StructScan(&newAnswer)
 		if err != nil {
 			return err
 		}
-		question.Answers = append(question.Answers, answer)
+		question.Answers = append(question.Answers, newAnswer)
+	}
+
+	if len(question.Answers) == 0 {
+		question.Answers = make([]answer, 0)
 	}
 
 	return nil

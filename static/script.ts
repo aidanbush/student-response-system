@@ -7,15 +7,22 @@ type answer = {
     answer_id: string;
     answer_text: string;
     question_id: string;
+    count: number;
+};
+
+type result = {
+    answer_id: string;
+    count: number;
 };
 
 type question = {
     question_title: string;
     question_id: string;
-    public:boolean;
+    public: boolean;
     class_id: string;
     answers: answer[];
     selected_answer: string;
+    responses: number;
 };
 
 type Class = {
@@ -75,6 +82,14 @@ class main {
             return undefined;
         }
         return Class.questions.find(question => question.question_id === qid);
+    }
+
+    static getAnswer(cid: string, qid: string, aid: string) {
+        let question: question | undefined = this.getQuestion(cid, qid);
+        if (question === undefined) {
+            return undefined;
+        }
+        return question.answers.find(answer => answer.answer_id === aid);
     }
 
     static getName() {
@@ -606,8 +621,9 @@ class instructorClassPage implements view {
         this.displayQuestions();
     }
 
-    static instructorViewQuestionResults(response: response) {
+    static instructorViewQuestionResults(response: response[]) {
         /* draw results */
+        this.displayQuestions();
     }
 
     static instructorViewDeleteQuestion(qid: string) {
@@ -630,6 +646,7 @@ class instructorClassPage implements view {
             class_id: main.currentClass,
             answers: [],
             selected_answer: "",
+            responses: 0,
         };
 
         let req: XMLHttpRequest = new XMLHttpRequest();
@@ -699,6 +716,7 @@ class instructorClassPage implements view {
             answer_id: "",
             answer_text: answerText,
             question_id: "",
+            count: 0,
         };
 
         let req: XMLHttpRequest = new XMLHttpRequest();
@@ -757,6 +775,18 @@ class instructorClassPage implements view {
         req.send(JSON.stringify(reqJSON));
     }
 
+    static addQuestionResults(qid: string, response: response[]) {
+        let totalCount: number = 0;
+        for (var i = 0; i < response.length; i++) {
+            let answer: answer = main.getAnswer(main.currentClass, qid, response[i].answer_id);
+            answer.count = response[i].count;
+            totalCount += response[i].count;
+        }
+        let question: question = main.getQuestion(main.currentClass, qid);
+        question.responses = totalCount;
+        console.log(question);
+    }
+
     static questionResultsClick(event: Event) {
         let qid: string = (<HTMLElement>event.target).id.split("_")[1];
         console.log("results question: ", qid);
@@ -765,7 +795,9 @@ class instructorClassPage implements view {
 
         req.onload = function () {
             if (req.readyState === 4 && req.status === 200) {
-                let res: response = JSON.parse(req.responseText);
+                console.log("got results")
+                let res: response[] = JSON.parse(req.responseText);
+                instructorClassPage.addQuestionResults(qid, res);
                 instructorClassPage.instructorViewQuestionResults(res);
                 return;
             }
