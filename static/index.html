@@ -115,12 +115,20 @@
                         {{~value.answers :answer}}
                         <li class="list-group-item">
                             <div>{{=answer.answer_text}}</div>
-                            <button id="ansDel_{{=value.question_id}}_{{=answer.answer_id}}" class="btn btn-danger">delete answer</button>
-                            {{? value.responses > 0}}
-                            <div class="progress">
-                                <div class="progress-bar" style="width: {{=answer.count / value.responses * 100}}%"></div>
+                            <div class="row">
+                                <div class="col-md-10">
+                                    <div class="progress" style="height: 100%">
+                                    {{? value.responses > 0}}
+                                        <div class="progress-bar" style="width: {{=answer.count / value.highestResponses * 100}}%">{{=answer.count}}</div>
+                                    {{??}}
+                                        <div class="progress-bar" style="width: 0%"></div>
+                                    {{?}}
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <button id="ansDel_{{=value.question_id}}_{{=answer.answer_id}}" class="btn btn-danger btn-sm">delete answer</button>
+                                </div>
                             </div>
-                            {{?}}
                         </li>
                         {{~}}
                     </ul>
