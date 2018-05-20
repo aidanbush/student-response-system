@@ -490,8 +490,8 @@ func retrieveQuestionsInstr(classID string) ([]question, error) {
 		return questions, err
 	}
 
-	question := question{}
 	for rows.Next() {
+		question := question{}
 		err = rows.StructScan(&question)
 		if err != nil {
 			return questions, err
