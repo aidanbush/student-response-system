@@ -23,6 +23,7 @@ type question = {
     answers: answer[];
     selected_answer: string;
     responses: number;
+    highestResponses: number;
 };
 
 type Class = {
@@ -647,6 +648,7 @@ class instructorClassPage implements view {
             answers: [],
             selected_answer: "",
             responses: 0,
+            highestResponses: 0,
         };
 
         let req: XMLHttpRequest = new XMLHttpRequest();
@@ -777,13 +779,19 @@ class instructorClassPage implements view {
 
     static addQuestionResults(qid: string, response: response[]) {
         let totalCount: number = 0;
+        let maxCount: number = 0;
+
         for (var i = 0; i < response.length; i++) {
             let answer: answer = main.getAnswer(main.currentClass, qid, response[i].answer_id);
             answer.count = response[i].count;
             totalCount += response[i].count;
+            if (response[i].count > maxCount) {
+                maxCount = response[i].count;
+            }
         }
         let question: question = main.getQuestion(main.currentClass, qid);
         question.responses = totalCount;
+        question.highestResponses = maxCount;
         console.log(question);
     }
 
