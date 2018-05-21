@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -24,20 +25,17 @@ type connectLog struct {
 	Error      error     `json:"error"`
 }
 
-// var fileWriter io.Writer
+var fileWriter io.Writer
 
-// const logName = "log-file"
+const logName = "log-file"
 
 func init() {
-	/*
-		fileWriter, err := os.OpenFile(logName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			panic("oh no")
-		}
-	*/
-	var t time.Time
-	t = time.Now()
-	fmt.Println(t.Unix())
+	var err error
+	fileWriter, err = os.OpenFile(logName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "unable to use file %s, using stderr instead\n", logName)
+		fileWriter = os.Stderr
+	}
 }
 
 func (w *logResponseWriter) WriteHeader(code int) {
@@ -51,7 +49,6 @@ func loggingMiddleWare(next http.Handler) http.Handler {
 
 		next.ServeHTTP(&logW, r)
 
-		fmt.Println("middleware")
 		log := connectLog{
 			Route:      r.URL.String(),
 			Method:     r.Method,
@@ -73,6 +70,6 @@ func loggingMiddleWare(next http.Handler) http.Handler {
 			return
 		}
 
-		fmt.Printf("%s\n", string(jsonOut))
+		fmt.Fprintf(fileWriter, "%s\n", string(jsonOut))
 	})
 }
